@@ -1,196 +1,54 @@
-# The Site Settings
-# v2.0
-# https://github.com/cotes2020/jekyll-theme-chirpy
-# © 2017-2019 Cotes Chung
-# MIT licensed
-
-
-# jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
-#--------------------------
-
-title: TUXTRACK                          # the main title
-
-tagline: Hacking stuff directly from sertão  # it will display as the sub-title
-
-description: >-                        # used by seo meta and the atom feed
-  My personal blog. 
-
-# Replace with your domain, e.g. 'https://username.github.io'
-url: 'https://tuxtrack.github.io'
-
-author: tuxtrack                  # change to your full name
-
-avatar: /assets/img/sample/avatar.jpg   # support internet resources
-
-github:
-  username: tuxtrack             # change to your github username
-
-twitter:
-  username: tuxtrack 
-
-instagram:
-  username: tuxtrack            # change to your twitter username
-
-instagram1:
-  username: tuxtrack    
-
-social:
-  name: tuxtrack                  # it will shows as the copyright owner in Footer
-  email: tuxtrack@hacknroll.com             # change to your email address
-  links:
-    # The first element serves as the copyright owner's link
-    - https://twitter.com/tuxtrack      # change to your twitter homepage
-    - https://github.com/tuxtrack
-    - https://instagram.com/tuxtrack      # change to your github homepage
-    # Uncomment below to add more social links
-    # - https://www.facebook.com/
-    # - https://www.linkedin.com/in/username
-
-google_site_verification: google_meta_tag_verification # change to your verification string
-
-#--------------------------
-
-# if your site type is Project Pages site, change below value to '/projectname'
-baseurl: ''
-
-# Change to your timezone › http://www.timezoneconverter.com/cgi-bin/findzone/findzone
-timezone: America/Maceio
-
-google_analytics:
-  # Fill with your Google Analytics ID
-  id: ''
-  # The Google Analytics pageviews switch.
-  # DO NOT enable it unless you know how to deploy the Google Analytics superProxy.
-  pv: false
-  # superProxy baseURL and URL, only valid when `google_analytics.pv` is set to 'true'
-  proxy_baseurl: ''
-  proxy_url: ''
-
-
-disqus:
-  comments: true  # boolean type, the global switch for posts comments.
-  shortname: 'tuxtrack'    # Fill with your Disqus shortname. › https://help.disqus.com/en/articles/1717111-what-s-a-shortname
-
-
-# Prefer color scheme setting, available values:
-#
-#     dual   - Follow the system prefer color by default, and a toggle will display
-#              in the left bottom of Sidebar, which used for switch the theme between dark and light.
-#
-#     light  - Use the light color scheme
-#
-#     dark   - Use the dark color scheme
-#
-theme_mode: dark
-
-# boolean type, global switch for ToC in posts.
-toc: false
+title: tuxtrack
+author: tuxtrack
+email: tuxtrack@hacknroll.com
+description: > # this means to ignore newlines until "show_exerpts:"
+  Write an awesome description for your new site here. You can edit this
+  line in _config.yml. It will appear in your document head meta (for
+  Google search results) and in your feed.xml site description.
+show_excerpts: false # set to true to show excerpts on the homepage
 
 paginate: 5
+paginate_path: "/blog/page:num/"
 
-markdown: kramdown
+tag_permalink_style: pretty
+tag_page_layout: tag_page
+tag_page_dir: tag
 
-highlighter: rouge
+# jekyll-dash date format
+# refer to http://shopify.github.io/liquid/filters/date/ if you want to customize this
+dash:
+  date_format: "%b %-d, %Y"
 
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
-  syntax_highlighter_opts: # Rouge Options › https://github.com/jneen/rouge#full-options
-    css_class: 'highlight'
-    # default_lang: console
-    span:
-      line_numbers: false
-    block:
-      line_numbers: true
-      start_line: 1
+  disqus:
+    shortname: tuxtrack
 
-permalink: /posts/:title/
+  # generate social links in footer
+  # supported colors: green, red, orange, blue, cyan, pink, teal, yellow, indigo, purple
+  social_links:
+    - url: https://twitter.com/tuxtrack
+      icon: twitter-square
+      color: cyan
+    - url: https://instagram.com/tuxtrack
+      icon: fa-instagram-square
+      color: red
+    - url: https://github.com/tuxtrack
+      icon: github-square
+      color: purple
 
-defaults:
-  -
-    scope:
-      path: ""          # An empty string here means all files in the project
-      type: posts
-    values:
-      layout: post
-      comments: true    # Enable comments in posts.
-      toc: true         # Display TOC column in posts.
-      location: Post
-      breadcrumb:
-        -
-          label: Posts
-          url: /
-  -
-    scope:
-      path: _drafts
-    values:
-      comments: false
-  -
-    scope:
-      path: tags
-    values:
-      tab_active: Tags
-      location: Tag
-      breadcrumb:
-        -
-          label: Home
-          url: /
-        -
-          label: Tags
-          url: /tabs/tags/
-  -
-    scope:
-      path: tabs
-    values:
-      layout: page
-      dynamic_title: true    # Hide title in mobile screens.
-      breadcrumb:
-        -
-          label: Home
-          url: /
-  -
-    scope:
-      path: assets/data
-    values:
-      layout: compress
+  show_author: true
 
+  animation_speed: 50
 
-sass:
-  sass_dir: /assets/css
-  style: compressed
-
-compress_html:
-  clippings: all
-  comments: ["<!-- ", " -->"]
-  endings: [html, head, body, dt, dd, rt, rp,
-            optgroup, option, colgroup, caption,
-            thead, tbody, tfoot, tr, td, th]
-  profile: false
-  blanklines: false
-  ignore:
-    envs: []
-
-exclude:
-  - vendor        # Avoid Jekyll mistakenly read the vender directory on Travis-CI's VM .
-  - Gemfile.lock
-  - Gemfile
-  - tools
-  - docs
-
-sitemap_exclude:  # Sitemap will exclude the following items.
-  fuzzy:
-    - /assets/
-  accurate:
-    - /norobots/
-    - /tabs/
-    - /categories/
-    - /tags/
-    - /posts/
-    - 404.html
-    - feed.xml
-    - sitemap.xml
-    - robots.txt
-    - redirects.json  
+# Build settings
+theme: jekyll-dash
 
 plugins:
-  - jekyll-paginate
+ - jekyll-feed
+ - jekyll-seo-tag
+ - jekyll-paginate
+ - liquid-md5
+ - jekyll/tagging
+
+# Replaces the default avatar provider (gravatar)
+#avatar_source: github
+#github_username: tuxtrack
