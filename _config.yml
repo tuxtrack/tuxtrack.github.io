@@ -27,7 +27,7 @@ dash:
       icon: twitter-square
       color: cyan
     - url: https://instagram.com/tuxtrack
-      icon: fa-instagram-square
+      icon: instagram
       color: red
     - url: https://github.com/tuxtrack
       icon: github-square
