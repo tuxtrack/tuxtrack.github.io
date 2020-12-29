@@ -2,7 +2,8 @@ title: tuxtrack
 author: tuxtrack
 email: tuxtrack@hacknroll.com
 description: > # this means to ignore newlines until "show_exerpts:"
- "Power is living your life on your own terms, how you want to, in a way that you feel good about." Kirsten Green
+ “The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.” 
+ Halvar Flake
 show_excerpts: false # set to true to show excerpts on the homepage
 
 paginate: 5
