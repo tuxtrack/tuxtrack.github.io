@@ -2,7 +2,15 @@ title: tuxtrack
 author: tuxtrack
 email: tuxtrack@hacknroll.com
 description: > # this means to ignore newlines until "show_exerpts:"
-  Hacking stuff directly from sertão
+  ,----------------------------------------------------,
+  | [][][][][]  [][][][][]  [][][][]  [][__]  [][][][] |
+  |                                                    |
+  |  [][][][][][][][][][][][][][_]    [][][]  [][][][] |
+  |  [_][][][][][][][][][][][][][ |   [][][]  [][][][] |
+  | [][_][][][][][][][][][][][][]||     []    [][][][] |
+  | [__][][][][][][][][][][][][__]    [][][]  [][][]|| |
+  |   [__][________________][__]              [__][]|| |
+  `----------------------------------------------------'
 show_excerpts: false # set to true to show excerpts on the homepage
 
 paginate: 5
