@@ -48,5 +48,5 @@ plugins:
  - jekyll/tagging
 
 # Replaces the default avatar provider (gravatar)
-avatar_source: gravatar
-github_username: tuxtr4ck
+avatar_source: github
+github_username: tuxtrack
