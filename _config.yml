@@ -2,6 +2,7 @@ title: tuxtrack
 author: tuxtrack
 email: tuxtrack@hacknroll.com
 description: > # this means to ignore newlines until "show_exerpts:"
+ Hi there, I am tuxtrack and occasionally I blog about hacking.
  “The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.” 
  Halvar Flake
 show_excerpts: false # set to true to show excerpts on the homepage
