@@ -1,0 +1,53 @@
+title: tuxtrack
+author: tuxtrack
+email: tuxtrack@hacknroll.com
+description: > # this means to ignore newlines until "show_exerpts:"
+ “The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.” 
+ Halvar Flake
+show_excerpts: false # set to true to show excerpts on the homepage
+
+paginate: 5
+paginate_path: "/blog/page:num/"
+
+tag_permalink_style: pretty
+tag_page_layout: tag_page
+tag_page_dir: tag
+
+# jekyll-dash date format
+# refer to http://shopify.github.io/liquid/filters/date/ if you want to customize this
+dash:
+  date_format: "%b %-d, %Y"
+
+  disqus:
+    shortname: tuxtrack
+
+  # generate social links in footer
+  # supported colors: green, red, orange, blue, cyan, pink, teal, yellow, indigo, purple
+  social_links:
+    - url: https://twitter.com/tuxtrack
+      icon: twitter-square
+      color: cyan
+    - url: https://instagram.com/tuxtrack
+      icon: instagram
+      color: red
+    - url: https://github.com/tuxtrack
+      icon: github-square
+      color: purple
+
+  show_author: true
+
+  animation_speed: 50
+
+# Build settings
+remote_theme: jekyll-dash
+
+plugins:
+ - jekyll-feed
+ - jekyll-seo-tag
+ - jekyll-paginate
+ - liquid-md5
+ - jekyll/tagging
+
+# Replaces the default avatar provider (gravatar)
+avatar_source: github
+github_username: tuxtrack

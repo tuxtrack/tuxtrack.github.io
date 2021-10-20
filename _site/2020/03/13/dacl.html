@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>DACL &amp; ACE’S ON ACTIVE DIRECTORY | tuxtrack</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="DACL &amp; ACE’S ON ACTIVE DIRECTORY" />
+<meta name="author" content="tuxtrack" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s." />
+<meta property="og:description" content="O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s." />
+<link rel="canonical" href="http://localhost:4000/2020/03/13/dacl.html" />
+<meta property="og:url" content="http://localhost:4000/2020/03/13/dacl.html" />
+<meta property="og:site_name" content="tuxtrack" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-03-13T09:55:00-03:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="DACL &amp; ACE’S ON ACTIVE DIRECTORY" />
+<script type="application/ld+json">
+{"url":"http://localhost:4000/2020/03/13/dacl.html","headline":"DACL &amp; ACE’S ON ACTIVE DIRECTORY","dateModified":"2020-03-13T09:55:00-03:00","datePublished":"2020-03-13T09:55:00-03:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/03/13/dacl.html"},"author":{"@type":"Person","name":"tuxtrack"},"description":"O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.","@type":"BlogPosting","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png" /><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="tuxtrack" /></head>
+<body><div class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">tuxtrack<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
+    <span class="social_links">
+        <a class="color-cyan-hover" href="https://twitter.com/tuxtrack"><i class="fab fa-twitter-square"></i></a><a class="color-red-hover" href="https://instagram.com/tuxtrack"><i class="fab fa-instagram"></i></a><a class="color-purple-hover" href="https://github.com/tuxtrack"><i class="fab fa-github-square"></i></a>
+    </span>
+  </div>
+</div>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        
+  <div class="author-box">
+    
+    
+        <img src="
+            https://github.com/tuxtrack.png
+        " class="author-avatar" alt="Avatar" />
+    
+“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
+
+</div>
+
+
+<div class="post">
+  <h1 class="post-title">DACL & ACE'S ON ACTIVE DIRECTORY</h1>
+  
+  <div class="post-tags">
+      
+      <a class="tag" href="/tag/ACTIVE DIRECTORY/">ACTIVE DIRECTORY</a>
+      
+      <a class="tag" href="/tag/REDTEAM/">REDTEAM</a>
+      
+      <a class="tag" href="/tag/WINDOWS/">WINDOWS</a>
+      
+      <a class="tag" href="/tag/ACL/">ACL</a>
+      
+  </div>
+  
+  <div class="post-date">Published on 13 Mar 2020</div>
+  
+  <p>O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.</p>
+
+<p>Essas mesmas permissões criadas para ajudar no processo de delegação de privilégios podem criar problemas de segurança, levando atacantes por caminhos onde a escalação de privilégio pode ser atingida.</p>
+
+<p>DACL &amp; ACE</p>
+
+<p>Todo <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/securable-objects">Securable Object</a> possui um <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/security-descriptors?redirectedfrom=MSDN">security descriptor</a> que pode incluir um Object Owner, <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists?redirectedfrom=MSDN">DACL (Discretionary Access Control List)</a> e uma <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists">SACL (System Access Control List)</a>.</p>
+
+<p>Security Descriptor Structure</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="nc">_SECURITY_DESCRIPTOR</span> <span class="p">{</span>
+  <span class="n">BYTE</span>                        <span class="n">Revision</span><span class="p">;</span>
+  <span class="n">BYTE</span>                        <span class="n">Sbz1</span><span class="p">;</span>
+  <span class="n">SECURITY_DESCRIPTOR_CONTROL</span> <span class="n">Control</span><span class="p">;</span>
+  <span class="n">PSID</span>                        <span class="n">Owner</span><span class="p">;</span>
+  <span class="n">PSID</span>                        <span class="n">Group</span><span class="p">;</span>
+  <span class="n">PACL</span>                        <span class="n">Sacl</span><span class="p">;</span>
+  <span class="n">PACL</span>                        <span class="n">Dacl</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="o">*</span><span class="n">PISECURITY_DESCRIPTOR</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p><img src="/assets/img/sample/dacl/dacl.png" alt="upload-image" /></p>
+
+<p>DACL’s são nada mais que um conjunto de <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/access-control-entries">ACE’s</a> agrupadas. Cada ACE refere-se a uma lista de permissões para usuário/grupos/processos, definidas por permitir ou negar acesso a determinada propriedade.</p>
+
+<p><img src="/assets/img/sample/dacl/da.png" alt="upload-image" /></p>
+
+<p>Quando um usuário solicita acesso a um objeto, há uma verificação de autorização onde o acesso é concedido baseando-se nas propriedades pré definidas, ex.: Read, Write, Delete e etc.</p>
+
+<p><img src="/assets/img/sample/dacl/ace.png" alt="upload-image" /></p>
+
+<blockquote>
+  <p>Any domain authenticated user can enumerate DACLs and Active Directory objects!</p>
+</blockquote>
+
+<p>Veremos quais as implicações de segurança que a má configuração pode causar.</p>
+
+<h2 id="forcechangepassword">ForceChangePassword</h2>
+
+<p>O usuário/grupo com essas atribuições tem poderes para alterar a senha do objeto no qual a permissão foi delegada, sem a necessidade de conhecer a senha atual.</p>
+
+<p>Usando o cmdlet <a href="https://powersploit.readthedocs.io/en/latest/Recon/Get-DomainObjectAcl/">Get-ObjectAcl</a> do PowerView para listar as propriedades do objeto Maycon Vitali, o output informa que o IdentityReference HNR\hnr_hnr possui permissões ExtendedRight para o ObjectType User-Force-Change-Password, delegando poderes para todos os membros do grupo HNR\hnr_hnr de alterar a senha do objeto Maycon Vitali.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Maycon Vitali,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Maycon</span><span class="w"> </span><span class="nx">Vitali</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">User-Force-Change-Password</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_hnr</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">ExtendedRight</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">ObjectAceTypePresent</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1103</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\tuxtrack, usuário pertencente ao grupo HNR\hnr_hnr, com o objetivo de obter privilégios do grupo Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh1.png" alt="upload-image" /></p>
+
+<p>Para abusar da ACE que permite a alteração da senha, utilizei o cmdlet Set-DomainUserPassword do PowerView. O parâmetro identity se refere a conta do usuário no qual se deseja alterar a senha.</p>
+
+<p><img src="/assets/img/sample/dacl/fun1.png" alt="upload-image" /></p>
+
+<h2 id="genericall">GenericAll</h2>
+
+<p>Caso o usuário receba privilégio GenericAll, o mesmo terá poderes sobre todas as propriedades do objeto, podendo adcionar/remover usuários em grupos, alterar a senha de usuários, habilitar/desabilitar acesso a novos objetos e etc.</p>
+
+<p>O grupo HNR/hnr_biscates possuem total controle sobre as propriedades do usuário tuxtrack, como pode ser verificado abaixo.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">tuxtrack</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">hnr_blog</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_biscates</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">GenericAll</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1105</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\alexos, com o objetivo de obter privilégios do grupo Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh2.png" alt="upload-image" /></p>
+
+<p>Como prova de conceito, foi alterada a propriedade <a href="https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-ada2/7f65d267-8a3f-4070-b94a-111e793d4821">msTSInitialProgram</a>, adicionando o path de um compartilhamento de rede no qual o atacante possua acesso. Assim, o atacante poderá controlar o arquivo que foi inserido na propriedade.</p>
+
+<blockquote>
+  <p>msTSInitialProgram - This attribute specifies the path and file name of the application that the user wants to start automatically when the user logs on to the terminal server.</p>
+</blockquote>
+
+<p><img src="/assets/img/sample/dacl/fun2.png" alt="upload-image" /></p>
+
+<h2 id="genericwrite">GenericWrite</h2>
+
+<p>Generic Write permite a leitura que e escrita para qualquer atributo não projegido do objeto.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=hnr_biscates,OU=HNR_Groups,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">hnr_biscates</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">HNR_Groups</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w"> 
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_nullbyte</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteProperty</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1109</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\idiotbox, usuário pertencente ao grupo HNR\nullbyte, com o objetivo de obter privilégios do grupo Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh3.png" alt="upload-image" /></p>
+
+<p>O usuário hnr/idiotbox pertence ao grupo HNR_BISCATES que possui privilégios GenericWrite no grupo HNR_NULLBYTE. Para exemplificar, adicionamos o usuário HNR/palmitao ao grupo hnr_biscates, mas qualquer propriedade pertencente ao objeto poderia ser modificada (ObjectType : All).</p>
+
+<p><img src="/assets/img/sample/dacl/fun3.png" alt="upload-image" /></p>
+
+<h2 id="writedacl">WriteDACL</h2>
+
+<p>Permissão para modificar DACL. Sendo assim, os usuários contemplados com essa permissão podem alterar quaisquer propriedades do objeto DACL (ACE), concedendo a si próprio qualquer privilégio.</p>
+
+<p>No exemplo abaixo, o grupo hnr_devs possuiem a permissão WriteDacl no grupo Enterprise Admins.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Enterprise Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Enterprise Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Enterprise</span><span class="w"> </span><span class="nx">Admins</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_devs</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteDacl</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-519</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\neko, usuário pertencente ao grupo HNR\hnr_devs, com o objetivo de obter privilégios do grupo Enterprise Admins e Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh4.png" alt="upload-image" /></p>
+
+<p>O ataque consiste em criar uma nova ACE no objeto Enterprise Admins, concedendo totais poderes sobres suas propriedades para o usuário HNR/neko e então adicioná-lo como membro do grupo Enterprise Admins, abusando dos direitos adquiridos.</p>
+
+<p><img src="/assets/img/sample/dacl/fun4.png" alt="upload-image" /></p>
+
+<p>O cenário exibido acima e no próximo tópico são meramente ilustrativos. Contas e Grupos definidos como <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#appendix-c-protected-accounts-and-groups-in-active-directory">Protected Accounts</a>, possuem mecanismos de segurança que verificam sua integridade automaticamente a cada 60 minutos, resetando suas permissões, comparando-as com as permissões do objeto AdminSDHolder. Esse processo é chamado de <a href="(https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop)">Security Description Propagation</a> ou <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop">SDProp</a>.</p>
+
+<p><a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#protected-accounts-and-groups-in-active-directory-by-operating-system">Contas e grupos protegidos no Active Directory pelo sistema operacional</a></p>
+
+<h2 id="writeowner">WriteOwner</h2>
+
+<p>Write Owner é o privilégio destinado ao Owner da DACL de um objeto no Active Directory. Ao ser criada a permissão, ela pode ser designada via ACE a apenas algumas propriedades do objeto ou a todas. O Owner possui GenericAll sobre todas as propridades do objeto, garantindo assim ao atacantes plenos poderes para executar diversas tarefas que podem comprometer o objeto.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Domain Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Domain</span><span class="w"> </span><span class="nx">Admins</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_admins</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteOwner</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-512</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\acode, usuário pertencente ao grupo HNR\hnr_admins, com o objetivo de obter privilégios do grupo Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh5.png" alt="upload-image" /></p>
+
+<p>Abaixo pode-se notar que foi verificado que o usuário HNR\acode não fazia parte dos membros do grupo Domain Admins, somente do grupo hnr_admins. O powerview possui o cmdlet Set-DomainObjectOwner, utilizado para definir o usuário HNR\acode como Owner do grupo Domain Admins. Após concluir a escrita do owner para usuário HNR\acode, foi criada uma ACE (Add-DomainObjectAcl) concedendo todos os privilégios ao usuário (-Rights “ALL”). Após todos os privilégios serem concedidos, o usuário HNR\acode foi inserido como membro do grupo Domain Admins (Add-DomainGroupMember).</p>
+
+<p><img src="/assets/img/sample/dacl/fun5.png" alt="upload-image" /></p>
+
+<h2 id="allextendedrights">AllExtendedRights</h2>
+
+<p>Poderes sobre todas as propriedades <a href="https://docs.microsoft.com/en-us/windows/win32/adschema/extended-rights">Extended Righs</a> de um objeto.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">tuxtrack</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">hnr_blog</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\pupilo</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">ReadProperty</span><span class="p">,</span><span class="w"> </span><span class="nx">WriteProperty</span><span class="p">,</span><span class="w"> </span><span class="nx">ExtendedRight</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1105</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\pupilo, usuário com AllExtendedRights sobre o usuário HNR\tuxtrack.</p>
+
+<p><img src="/assets/img/sample/dacl/bh6.png" alt="upload-image" /></p>
+
+<p>Extended Rights aplicáveis a usuários</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Extended Right</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Change Password {ab721a53-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Enables you to change the password on a user account. You must know the user’s current password in order to provide them with a new password.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Reset Password {00299570-246d-11d0-a768-00aa006e0529}</td>
+      <td style="text-align: left">Enables you to reset the password on a user account. You do not need to know the user’s current password in order to provide them with a new password.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Receive As {ab721a56-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Exchange right that enables you to receive mail as a given mailbox.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Send As {ab721a54-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Exchange right that enables you to send mail as the mailbox.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>No cenário abaixo, o usuário HNR\pupilo, possui plenos privilégios para alterar a senha do usuário HNR\tuxtrack. Após alterá-la, o usuário pode executar o cmd.exe através do comando <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc771525(v%3Dws.11)">runas</a> com o usuário HNR\tuxtrack.</p>
+
+<p><img src="/assets/img/sample/dacl/fun6.png" alt="upload-image" /></p>
+
+<hr />
+
+<p>Como apresentado, privilégios podem ser abusados em diversos caminhos, explorando a necessidade de delegá-los dentro de uma infraestrutura corporativa para atender as mais adversas necessidades.</p>
+
+<p>Fico a disposição para sanar quaisquer dúvidas, até o próximo!</p>
+
+<p>Referências:</p>
+
+<p><a href="https://specterops.io/assets/resources/an_ace_up_the_sleeve.pdf">An ACE Up The Sleeve</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryrights?view=netframework-4.7.2">Active Directory Rights Enum</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/previous-versions/tn-archive/ff405676(v=msdn.10)">Extended Rights Reference</a></p>
+
+
+</div>
+
+
+<div class="comments">
+<div id="disqus_thread"></div>
+<script>
+ var disqus_config = function () {
+     this.page.url = 'http://localhost:4000/2020/03/13/dacl.html';
+     this.page.identifier = '/2020/03/13/dacl';
+     this.page.title = 'DACL & ACE'S ON ACTIVE DIRECTORY';
+ };
+
+ (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+     var d = document, s = d.createElement('script');
+
+     s.src = '//tuxtrack.disqus.com/embed.js';
+
+     s.setAttribute('data-timestamp', +new Date());
+     (d.head || d.body).appendChild(s);
+ })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+</div>
+
+
+
+
+<div class="related">
+  <h2>related posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2020/05/09/k&d.html">
+            Kerberos & Delegation
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/03/02/g&s.html">
+            Golden & Silver
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2020/02/13/kerberos101.html">
+            Kerberos & Kerberoast
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+  
+  <h2>all tags</h2>
+  <div class="tag-cloud"><a href="/tag/acl/" class="set-1">ACL</a> <a href="/tag/active-directory/" class="set-5">ACTIVE DIRECTORY</a> <a href="/tag/delegation/" class="set-1">DELEGATION</a> <a href="/tag/hello-world/" class="set-1">HELLO WORLD</a> <a href="/tag/kerberos/" class="set-2">KERBEROS</a> <a href="/tag/redteam/" class="set-5">REDTEAM</a> <a href="/tag/windows/" class="set-5">WINDOWS</a></div>
+  
+
+
+
+
+<script>
+  let i = 0;
+  const text = '';
+  const speed = parseInt('50');
+  
+  function typeWriter() {
+    if (i < text.length) {
+      document.getElementById('animated-post-description').innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typeWriter, speed);
+    }
+  }
+
+  document.getElementById('animated-post-description').style.display = 'initial';
+  typeWriter();
+</script>
+
+      </div>
+    </main><footer class="site-footer">
+  <div class="wrapper">
+    <div class="credits"><a href="https://github.com/bitbrain/jekyll-dash">dash</a> theme for Jekyll by <a href="https://github.com/bitbrain">bitbrain</a> made with <i class="fas fa-heart"></i><div class="toggleWrapper">
+    <input type="checkbox" class="dn" id="theme-toggle" onclick="modeSwitcher()" checked />
+    <label for="theme-toggle" class="toggle">
+    <span class="toggle__handler">
+      <span class="crater crater--1"></span>
+      <span class="crater crater--2"></span>
+      <span class="crater crater--3"></span>
+    </span>
+        <span class="star star--1"></span>
+        <span class="star star--2"></span>
+        <span class="star star--3"></span>
+        <span class="star star--4"></span>
+        <span class="star star--5"></span>
+        <span class="star star--6"></span>
+    </label>
+</div>
+<script type="text/javascript">
+const theme = localStorage.getItem('theme');
+
+if (theme === "light") {
+    document.documentElement.setAttribute('data-theme', 'light');
+} else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+}
+const userPrefers = getComputedStyle(document.documentElement).getPropertyValue('content');
+
+function activateDarkTheme() {
+    document.getElementById('theme-toggle').checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('theme--dark');
+    document.documentElement.classList.remove('theme--light');
+	document.getElementById("theme-toggle").className = 'light';
+	window.localStorage.setItem('theme', 'dark');
+}
+
+function activateLightTheme() {
+    document.getElementById('theme-toggle').checked = false;
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.add('theme--light');
+    document.documentElement.classList.remove('theme--dark');
+	document.getElementById("theme-toggle").className = 'dark';
+	window.localStorage.setItem('theme', 'light');
+}
+
+if (theme === "dark") {
+    activateDarkTheme();
+} else if (theme === "light") {
+    activateLightTheme();
+} else if  (userPrefers === "light") {
+    activateDarkTheme();
+} else {
+    activateDarkTheme();
+}
+
+function modeSwitcher() {
+	let currentMode = document.documentElement.getAttribute('data-theme');
+	if (currentMode === "dark") {
+	    activateLightTheme();
+	} else {
+	    activateDarkTheme();
+	}
+}
+</script></div>
+  </div>
+</footer>
+<script>
+      window.FontAwesomeConfig = {
+        searchPseudoElements: true
+      }
+    </script>
+  </body>
+
+</html>
