@@ -11,7 +11,7 @@
   }
 
   .command_prompt {
-    color: $color-blue;
+    color: $color-pink;
     font-size: $base-font-size;
     margin-left: 0.1em;
 
@@ -21,6 +21,14 @@
       margin-right: 0.2em;
     }
   }
+}
+
+.dotted{
+  
+  margin-top: 5em;
+  border: 1px dashed;
+  color: $color-pink;
+
 }
 
 .site-title {
@@ -44,7 +52,11 @@
 }
 
 .site-footer {
-  margin-bottom: 2em
+  margin-bottom: 4em
+}
+
+h1{
+  margin-top: 1em;  
 }
 
 .wrapper {
@@ -64,8 +76,8 @@
      float: left;
      white-space: pre-line;
      margin-right: 1em;
-     width: 72px;
-     height: 72px;
+     width: 120px;
+     height: 120px;
      border-radius: 0.3em;
    }
  }
@@ -74,8 +86,8 @@
   margin-bottom: 1em;
 }
 
-
 .post-title {
+    margin-top: 1em;
     @include themed() {
        color: t('foreground-color');
     }
