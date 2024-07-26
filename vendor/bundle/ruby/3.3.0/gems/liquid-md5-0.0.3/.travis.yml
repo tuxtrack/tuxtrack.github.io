@@ -1,0 +1,15 @@
+language: ruby
+rvm:
+- 2.3
+- 2.2
+- 2.1
+- 2.0
+script: script/cibuild
+deploy:
+  provider: rubygems
+  api_key:
+    secure: frajz16zO85SIerwt+2CCjZ9BXgwn0seWfnfshJRoxk6MQd9X8pegM2gKIwKNMZHi72tU9rWOaCmwToJ0v+3c79DjZeQglqUSM+7i9dbr5vVHpDfJYppUSLpBT+c8hq/K9OibyuTU2Ar+U+zhRrcK4frwPYxHu63+qw71j48jTs=
+  gem: liquid-md5
+  on:
+    tags: true
+    repo: pathawks/liquid-md5
