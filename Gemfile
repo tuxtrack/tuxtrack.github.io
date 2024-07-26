@@ -8,7 +8,7 @@ source "https://rubygems.org"
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
 gem "jekyll", "~> 4.3.3"
-gem 'jekyll-dash', '~> 2'
+gem 'jekyll-dash', '~> 1'
 gem "liquid-md5"
 gem "jekyll-tagging"
 gem "kramdown-parser-gfm"
