@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html class="direction--ltr"lang="en"><head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>DACL &amp; ACE | PS C:\Users\tuxtrack</title>
+<title>DACL &amp; ACE’S ON ACTIVE DIRECTORY | PS C:\Users\tuxtrack</title>
 <meta name="generator" content="Jekyll v4.3.3" />
-<meta property="og:title" content="DACL &amp; ACE" />
+<meta property="og:title" content="DACL &amp; ACE’S ON ACTIVE DIRECTORY" />
 <meta name="author" content="tuxtrack" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s." />
@@ -16,32 +16,17 @@
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-03-13T12:55:00+00:00" />
 <meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="DACL &amp; ACE" />
+<meta property="twitter:title" content="DACL &amp; ACE’S ON ACTIVE DIRECTORY" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"tuxtrack"},"dateModified":"2020-03-13T12:55:00+00:00","datePublished":"2020-03-13T12:55:00+00:00","description":"O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.","headline":"DACL &amp; ACE","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/03/13/dacl.html"},"url":"http://localhost:4000/2020/03/13/dacl.html"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"tuxtrack"},"dateModified":"2020-03-13T12:55:00+00:00","datePublished":"2020-03-13T12:55:00+00:00","description":"O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.","headline":"DACL &amp; ACE’S ON ACTIVE DIRECTORY","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/03/13/dacl.html"},"url":"http://localhost:4000/2020/03/13/dacl.html"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/css/style.css">
-  <link rel="icon" type="image/png" href="/assets/favicon.png" />
-  <link rel="stylesheet" href="/assets/css/magnific-popup.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="PS C:\Users\tuxtrack" /><script src="https://code.jquery.com/jquery-3.2.0.min.js"></script> 
-  <script src="/assets/js/jquery.magnific-popup.js"></script>
-</head>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" /><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="PS C:\Users\tuxtrack" /></head>
 <body><div class="site-header">
   <div class="wrapper">
     <a class="site-title" rel="author" href="/">PS C:\Users\tuxtrack<b class="command_prompt"></b><b class="blinking_cursor">_</b></a>
     <span class="social_links">
-        
-        
-        <a class="color-cyan-hover" href="https://twitter.com/tuxtrack"><i class="fab fa-twitter-square"></i></a>
-        
-        
-        
-        <a class="color-red-hover" href="https://instagram.com/tuxtrack"><i class="fab fa-instagram"></i></a>
-        
-        
-        
-        <a class="color-purple-hover" href="https://github.com/tuxtrack"><i class="fab fa-github-square"></i></a>
-        
-        
+        <a class="color-cyan-hover" href="https://twitter.com/tuxtrack"><i class="fab fa-twitter-square"></i></a><a class="color-red-hover" href="https://instagram.com/tuxtrack"><i class="fab fa-instagram"></i></a><a class="color-purple-hover" href="https://github.com/tuxtrack"><i class="fab fa-github-square"></i></a>
     </span>
   </div>
 </div>
@@ -49,36 +34,34 @@
       <div class="wrapper">
         
   <div class="author-box">
+    
+    
+        <img src="
+            https://github.com/tuxtrack.png
+        " class="author-avatar" alt="Avatar" />
+    
+“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
 
-
-<img src="
-    /assets/avatar.png
-" class="author-avatar" alt="Avatar" />
-<div class="description">“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.” Halvar Flake
 </div>
 
-</div>
 
-
+<hr class="dotted">
 <div class="post">
-  <h1 class="post-title">DACL & ACE</h1>
+  <h1 class="post-title">DACL & ACE'S ON ACTIVE DIRECTORY</h1>
   
   <div class="post-tags">
       
-      <a class="tag" href="/tag/active-directory/">ACTIVE DIRECTORY</a>
+      <a class="tag" href="/tag/ACTIVE DIRECTORY/">ACTIVE DIRECTORY</a>
       
-      <a class="tag" href="/tag/redteam/">REDTEAM</a>
+      <a class="tag" href="/tag/REDTEAM/">REDTEAM</a>
       
-      <a class="tag" href="/tag/windows/">WINDOWS</a>
+      <a class="tag" href="/tag/WINDOWS/">WINDOWS</a>
       
-      <a class="tag" href="/tag/acl/">ACL</a>
+      <a class="tag" href="/tag/ACL/">ACL</a>
       
   </div>
   
-  <div class="post-date">
-    Published on 13 Mar 2020
-    
-  </div>
+  <div class="post-date">Published on 13 Mar 2020</div>
   
   <p>O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.</p>
 
@@ -347,7 +330,7 @@
  var disqus_config = function () {
      this.page.url = 'http://localhost:4000/2020/03/13/dacl.html';
      this.page.identifier = '/2020/03/13/dacl';
-     this.page.title = 'DACL & ACE';
+     this.page.title = 'DACL & ACE'S ON ACTIVE DIRECTORY';
  };
 
  (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
@@ -372,14 +355,6 @@
     
       <li>
         <h3>
-          <a href="/2024/01/01/bla.html">
-            Hello Friend1
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
           <a href="/2020/03/02/g&s.html">
             Golden & Silver
           </a>
@@ -394,6 +369,14 @@
         </h3>
       </li>
     
+      <li>
+        <h3>
+          <a href="/2020/02/09/Hi.html">
+            Hello Friend
+          </a>
+        </h3>
+      </li>
+    
   </ul>
 </div>
 
@@ -402,7 +385,7 @@
 
   
   <h2>all tags</h2>
-  <div class="tag-cloud"><a href="/tag/acl/" class="set-1">ACL</a> <a href="/tag/active-directory/" class="set-5">ACTIVE DIRECTORY</a> <a href="/tag/hello-world/" class="set-1">HELLO WORLD</a> <a href="/tag/hello-world1/" class="set-1">HELLO WORLD1</a> <a href="/tag/kerberos/" class="set-3">KERBEROS</a> <a href="/tag/redteam/" class="set-5">REDTEAM</a> <a href="/tag/windows/" class="set-5">WINDOWS</a></div>
+  <div class="tag-cloud"><a href="/tag/acl/" class="set-1">ACL</a> <a href="/tag/active-directory/" class="set-5">ACTIVE DIRECTORY</a> <a href="/tag/hello-world/" class="set-1">HELLO WORLD</a> <a href="/tag/kerberos/" class="set-3">KERBEROS</a> <a href="/tag/redteam/" class="set-5">REDTEAM</a> <a href="/tag/windows/" class="set-5">WINDOWS</a></div>
   
 
 
@@ -411,7 +394,7 @@
 <script>
   let i = 0;
   const text = '';
-  const speed = parseInt('100');
+  const speed = parseInt('50');
   
   function typeWriter() {
     if (i < text.length) {
@@ -423,30 +406,6 @@
 
   document.getElementById('animated-post-description').style.display = 'initial';
   typeWriter();
-
-  // Image modal
-  var $imgs = [];
-  $('img').each(function(idx) {
-    var obj = {
-      src: $(this).attr('src')
-    }
-    $imgs.push(obj);
-    var elem = $(this);
-    $(this).click(function() {
-      $('.modal').magnificPopup('open', idx);
-    });
-  });
-
-  $('.modal').magnificPopup({
-    items: $imgs,
-    type: 'image',
-    closeOnContentClick: true,
-    mainClass: 'mfp-img-mobile',
-    image: {
-      verticalFit: true
-    }
-    
-  });
 </script>
 
       </div>
@@ -517,8 +476,6 @@ function modeSwitcher() {
 </script></div>
   </div>
 </footer>
-
-
 <script>
       window.FontAwesomeConfig = {
         searchPseudoElements: true
