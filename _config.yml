@@ -35,7 +35,6 @@ dash:
       color: purple
 
   show_author: true
-
   animation_speed: 50
 
 # Build settings
