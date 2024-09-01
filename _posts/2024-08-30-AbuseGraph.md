@@ -21,19 +21,19 @@ The exploitation scenario we're about to explore is not a rare occurrence. It of
 ---
 ## Application Registration
 
-Application Registration is a process where a developer or administrator registers an application with Entra ID (Azure AD) within a specific tenant. This registration process enables the application to interact with Azure services and resources.
+Application Registration is a process where someone registers an application with Entra ID (Azure AD) within a specific tenant. This registration enables the application to interact with Azure services and resources.
 
 - **Application Registration**: When an application is registered, it is assigned a unique Application ID (Client ID) and provided with configuration settings like redirect URIs and permissions.
 - **Service Principal**: The Entra ID creates a corresponding Service Principal once an application is registered. The service principal acts as the application's identity within the tenant and is used for authentication. It enables the application to obtain access tokens and interact with resources according to the permissions granted during registration.
 
-For those seeking further information on Service Principals, Application Registrations, and how to abuse other API permissions, I recommend reviewing [Andy Robbins's](https://x.com/_wald0) [work](https://posts.specterops.io/azure-privilege-escalation-via-service-principal-abuse-210ae2be2a5). His research provides an in-depth look at the risks associated with granting certain permissions to applications and how these can be exploited to create privilege escalation and lateral movement opportunities.
+I recommend reviewing Andy Robbins's work for those seeking further information on Service Principals, Application Registrations, and how to abuse other API permissions. His research provides an in-depth look at the risks associated with granting certain permissions to applications and how these can be exploited to create privilege escalation and lateral movement opportunities.
 
 ---
 ## Microsoft Graph API
 
 In a red team scenario, if the credentials for a registered Teams BOT or any other application are compromised, attackers can use these credentials to exploit the application’s permissions. In the BOT case, the ability to read/write messages and read/write files can be leveraged to intercept communications, send messages, and manipulate data.
 
-The structure of the Microsoft Graph API is designed around a RESTful model, which means it is organized into resources, actions, and data models.
+The Microsoft Graph API's structure is designed around a RESTful model, which means it is organized into resources, actions, and data models.
 
 **Structure of Microsoft Graph API**:
 
@@ -49,8 +49,8 @@ The structure of the Microsoft Graph API is designed around a RESTful model, whi
 	- **Devices**: /devices - Represents devices registered in the directory.
 	- **Applications**: /applications - Represents applications registered in Azure AD.
 	- **Messages**: /users/{user-id}/messages - Represents email messages in a user’s mailbox.
-	- **Files**: /me/drive/root/children - Represents files in OneDrive or SharePoint.
-	- **Calendar**: /me/calendar - Represents a user’s calendar.
+	- **Files**: /users/{User-id}/drive/root/children - Represents files in OneDrive or SharePoint.
+	- **Calendar**: /users/{User-id}/calendar - Represents a user’s calendar.
 	- **Teams**: /teams - Represents Microsoft Teams, including channels, members, and messages.
 
 3. **Actions and Operations**:
@@ -77,7 +77,6 @@ The structure of the Microsoft Graph API is designed around a RESTful model, whi
 	- When the application needs to interact with Azure services, it requests an access token from Azure AD using its client ID and secret (or certificate). This token represents the application’s identity and permissions.
 	- Microsoft Graph API uses OAuth 2.0 for authentication and authorization.
 	- Applications must obtain an access token by authenticating with Azure AD.
-	-
 		
 7. Permissions:
 	
@@ -88,7 +87,7 @@ The structure of the Microsoft Graph API is designed around a RESTful model, whi
 ---
 ### Service principal authentication
 
-The process of connecting a service principal with Entra ID (formerly known as Azure Active Directory) is referred to as **service principal authentication** or **service principal login**. This process involves using a service principal to authenticate and authorize automated scripts, applications, or services to access resources secured by Entra ID without requiring user interaction.
+Connecting a service principal with Entra ID (formerly known as Azure Active Directory) is referred to as **service principal authentication** or **service principal login**. This process involves using a service principal to authenticate and authorize automated scripts, applications, or services to access resources secured by Entra ID without requiring user interaction.
 
 In practical terms, this means configuring your application or service to use the service principal’s credentials (Client ID, Tenant ID, and Client Secret or Certificate) to authenticate with Entra ID. Once authenticated, the service principal can access Azure resources or Microsoft 365 services, depending on the permissions granted to it.
 
@@ -126,7 +125,7 @@ These permissions are used to access various Microsoft 365 services and data. Ea
 
 - [**Chat.Read.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#chatreadall) - *It provides read-only access, meaning the application can view chat content without modifying or deleting it.*
 - [**Chat.ReadWrite.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#chatreadwriteall) - *This broader permission allows an application to read and modify chat messages.*
-- [**ChatMessage.Read.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#chatmessagereadall) - *Similar to Chat.Read.All, but more specific to the content of the messages themselves. This could be used by applications that need to analyze message content across various chats and channels in Teams.*
+- [**ChatMessage.Read.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#chatmessagereadall) - *Similar to Chat.Read.All, but more specific to the content of the messages themselves. This could be used by applications that analyze message content across various chats and channels in Teams.*
 - [**Files.ReadWrite.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#filesreadwriteall) - *This permission is used by applications that need full access to files stored in OneDrive, SharePoint, or other storage services integrated with Microsoft 365. Examples include file management tools, backup services, or collaboration platforms that need to create or modify documents.*
 - [**User.Read.All**](https://learn.microsoft.com/en-us/graph/permissions-reference#userreadall) - *This permission allows an application to read the properties of all user accounts in an organization.* 
 
@@ -142,7 +141,7 @@ The `/users` endpoint allows us to list users in an organization. We can also us
 
 ```
 displayName       : alexos
-id                : 362a96a5-1ac3-44ec-8017-408a4829459f
+id                : 362a96a5-1ac3-55ec-8017-408a4829459f
 ```
 
 Powershell code to retrieve the user's chat messages:
@@ -202,14 +201,13 @@ Results
     [+] Message: <systemEventMessage/>
 ```
 
-Okay, this is interesting and opens lots of opportunities from the offensive standpoint. We can try to find sensitive content like passwords and company secrets. But my first thought was to intercept and modify messages containing Microsoft Word attachments, adding some "malware" capability.
-
+Okay, this is interesting and opens lots of offensive opportunities. We can find sensitive content like passwords and company secrets. But my first thought was to intercept and modify messages containing Microsoft Word attachments, adding some "malware" capability.
 ## Mixing features and tricks
 
 Let's discuss some features and tricks that, when mixed, can open new ways to pwn users.
 #### Graph API Change Notifications
 
-Instead of retrieving all users' messages to find interesting attachments, we can adopt the use of Change Notifications. The [Microsoft Graph API change notifications](https://learn.microsoft.com/en-us/graph/api/resources/change-notifications-api-overview?view=graph-rest-1.0) feature allows applications to receive real-time updates when data changes in Microsoft 365 services (like emails, files, chats, or user information). Instead of constantly polling for changes, your application subscribes to specific events, and when a change occurs, Microsoft Graph sends a notification to a specified endpoint (like a webhook). 
+Instead of retrieving all users' messages to find old attachments, we can adopt the use of Change Notifications. The [Microsoft Graph API change notifications](https://learn.microsoft.com/en-us/graph/api/resources/change-notifications-api-overview?view=graph-rest-1.0) feature allows applications to receive real-time updates when data changes in Microsoft 365 services (like emails, files, chats, or user information). Instead of constantly polling for changes, your application subscribes to specific events, and when a change occurs, Microsoft Graph sends a notification to a specified endpoint (like a webhook). 
 
 Exciting resources that support change notifications:
 
@@ -238,13 +236,12 @@ Exciting resources that support change notifications:
 	- Changes to chat messages in all chats a particular user is part of: `/users/{id}/chats/getAllMessages`  
 	- Changes to chat messages for all chats in an organization where a particular Teams app is installed: `/appCatalogs/teamsApps/{id}/installedToChats/getAllMessages`
 
-Typically, subscription operations require read permissions for the targeted resource. For instance, to receive notifications for email messages, your app must have the Mail.Read permission. 
-
+Typically, subscription operations require read permissions for the targeted resource. 
 #### Creating a change notification subscription
 
 To create a subscription in Microsoft Graph, you need to send an HTTP POST request to the `/subscriptions` endpoint of the Microsoft Graph API. This request informs Microsoft Graph that you wish to receive notifications whenever a particular resource, such as emails, calendar events, or users, is modified.
 
-The URL for creating a subscription is:
+Subscriptions endpoint: 
 
 ```
 https://graph.microsoft.com/v1.0/subscriptions
@@ -378,7 +375,7 @@ else {
 }
 ```
 
-If you need help with how to set up a function app, please refer to the Microsoft [guide](https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal?pivots=programming-language-powershell).
+If you need help setting up a function app, please refer to the Microsoft [guide](https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal?pivots=programming-language-powershell).
 
 Let's see how it works.
 
@@ -391,7 +388,7 @@ Cool, huh? Now, we can know when someone sends a message containing the password
 
 Each time a user sends a file on an MS Teams chat, this file is uploaded to the user's Sharepoint drive at `/root/Microsoft Chat Files/`. Initially, I attempted to receive change notifications for the folder to identify the most recent MS Office Word file uploaded to that folder. However, in OneDrive for Business, you can only subscribe to the 'root' folder, which means that any change in the root hierarchy will create a new notification containing data that is not relevant to us.
 
-So, how can we infect the file? 
+So, how can we modify the file? 
 
 Analyzing the structure of the messages of attachments, the content looks like `<attachment id={GUID}></attachment>`. Instead of the keyword password, we can use `<attachment id=` to fetch notifications only for attachments sent on the chat.
 
@@ -850,10 +847,10 @@ while ($true) {
 - **File Handling**: The document is saved as a macro-enabled Word document (.doc), and the original .docx file is deleted after the operation.
 - **Resource Management**: COM objects are properly released.
 
-We have a last challenge to accomplish our goal. When a user sends a file in a chat, the regular behavior of the user is to click on the file link, and the teams will render the document on the browser. Running macros in Word on the browser is not possible because the browser version of Word, known as **Word for the Web** or **Word Online**, is designed to be lightweight and accessible across different platforms and devices. This design prioritizes simplicity, security, and cross-platform compatibility, which imposes certain limitations compared to the desktop version of Word.
+We have a last challenge to accomplish our goal. When a user sends a file in a chat, the user's regular behavior is to click on the file link, and the teams will render the document on the browser. Running macros in Word on the browser is impossible because the browser version of Word is designed to be lightweight and accessible across different platforms and devices.
 ### Extending the Social Engineering Capabilities
 
-In order to make the user download the file and run our macro, I used a method where I added a shape to cover the entire page and included some text to convince the user. 
+To make the user download the file and run our macro, I used a method of adding a shape to cover the entire page and including some text to convince the user. 
 
 ```Powershell
 # Create a new COM object to interact with Word
@@ -887,6 +884,6 @@ I added additional shapes, text, and elements to my final POC, including a user 
   <source src="https://tuxtrack.github.io/assets/video/POC.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
-It is important to be aware of the numerous opportunities for abusing Graph API permissions. With a creative approach, one can explore various paths and develop intriguing attack scenarios. Staying up to date with Graph API features and being familiar with this "playground" is really necessary for those who seek to have the minimum knowledge about Azure Offensive Security.
+It is essential to be aware of the numerous opportunities for abusing Graph API permissions. With a creative approach, one can explore various paths and develop intriguing attack scenarios. Staying up to date with Graph API features and being familiar with this "playground" is necessary for those who seek to have the minimum knowledge about Azure Offensive Security.
 
 I hope you enjoyed the reading.
