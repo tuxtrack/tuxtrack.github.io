@@ -887,5 +887,6 @@ I added additional shapes, text, and elements to my final POC, including a user 
   <source src="https://tuxtrack.github.io/assets/video/POC.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
+It is important to be aware of the numerous opportunities for abusing Graph API permissions. With a creative approach, one can explore various paths and develop intriguing attack scenarios. Staying up to date with Graph API features and being familiar with this "playground" is really necessary for those who seek to have the minimum knowledge about Azure Offensive Security.
 
-
+I hope you enjoyed the reading.
