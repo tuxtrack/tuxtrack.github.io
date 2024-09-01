@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Mixing strategies and Microsoft Graph API permissions to create valuable opportunities
+title: Turning tricks and graph API permissions into a clever attack vector
 date: 2024-07-26 16:43:00 +0800
 tags:
   - AZURE
