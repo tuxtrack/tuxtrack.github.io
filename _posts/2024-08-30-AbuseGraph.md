@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Turning tricks and graph API permissions into a clever attack vector
-date: 2024-07-26 16:43:00 +0800
+date: 2024-08-30
 tags:
   - AZURE
   - GRAPHAPI
