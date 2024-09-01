@@ -7,14 +7,14 @@ tags:
   - GRAPHAPI
   - REDTEAM
   - TRICKS
-description: This post will focus on leveraging the Graph API to exploit misconfigurations and unauthorized access by using REST API methods to intercept, modify, and compromise users across the environment.
+description: This post will focus on leveraging the Graph API to exploit API permissions by using REST API methods to intercept and modify files sent by users on Microsoft Teams chats.
 ---
-![](/assets/img/sample/bot.png)
+![](/assets/img/sample/gif2.gif)
 
 
 The Microsoft Graph API is a powerful gateway to data across Azure and Microsoft 365 services, offering unique opportunities for red teamers to emulate advanced attack scenarios. Whether you're new to red teaming or seeking enjoyment, this guide will provide valuable insights and practical examples to enhance your skills (I hope).
 
->This post explores the dual nature of Bot applications using the Microsoft Graph API. Bot applications can be designed for legitimate purposes but may also be exploited to misuse or overreach data access through inappropriate or excessive permissions.
+>This post explores the nature of Bot applications using the Microsoft Graph API. Bot applications can be designed for legitimate purposes but may also be abused to misuse or overreach data access through inappropriate or excessive permissions.
 
 The exploitation scenario we're about to explore is not a rare occurrence. It often begins with compromising application credentials. Many companies register bot applications to send announcements within corporate Microsoft Teams channels. Sometimes, this practice can lead to credential compromise through various means, such as leaks on GitHub, developer account breaches, [exposed data in storage accounts](https://posts.specterops.io/microsoft-breach-what-happened-what-should-azure-admins-do-da2b7e674ebc), and more.
 
